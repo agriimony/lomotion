@@ -16,6 +16,8 @@ export function LoMotionStudio() {
   const rafRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const framesRef = useRef<CapturedFrame[]>([]);
+  const modeRef = useRef<Mode>("live");
+  const thresholdRef = useRef(DEFAULT_THRESHOLD);
   const recordStartRef = useRef<number>(0);
   const lastCaptureAtRef = useRef<number>(0);
   const objectUrlRef = useRef<string | null>(null);
@@ -28,6 +30,14 @@ export function LoMotionStudio() {
   const [error, setError] = useState("");
   const [recordMs, setRecordMs] = useState(0);
   const [previewSize, setPreviewSize] = useState({ width: TARGET_WIDTH, height: 84 });
+
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
+  useEffect(() => {
+    thresholdRef.current = threshold;
+  }, [threshold]);
 
   const displayScale = useMemo(() => {
     if (typeof window === "undefined") return 4;
@@ -62,7 +72,7 @@ export function LoMotionStudio() {
 
     pctx.drawImage(video, 0, 0, TARGET_WIDTH, targetHeight);
     const raw = pctx.getImageData(0, 0, TARGET_WIDTH, targetHeight);
-    const quantized = quantizeTo1Bit(raw, threshold);
+    const quantized = quantizeTo1Bit(raw, thresholdRef.current);
 
     displayCanvas.width = TARGET_WIDTH * displayScale;
     displayCanvas.height = targetHeight * displayScale;
@@ -91,23 +101,25 @@ export function LoMotionStudio() {
         lastCaptureAtRef.current = now;
       }
     }
-  }, [displayScale, threshold]);
+  }, [displayScale]);
+
+  const stopRecordingRef = useRef<() => Promise<void>>(async () => {});
 
   const loop = useCallback((now: number) => {
-    const isRecording = mode === "recording";
+    const isRecording = modeRef.current === "recording";
     renderProcessedFrame(isRecording, now);
 
     if (isRecording) {
       const elapsed = now - recordStartRef.current;
       setRecordMs(elapsed);
       if (elapsed >= MAX_RECORD_MS) {
-        void stopRecording();
+        void stopRecordingRef.current();
         return;
       }
     }
 
     rafRef.current = window.requestAnimationFrame(loop);
-  }, [mode, renderProcessedFrame]);
+  }, [renderProcessedFrame]);
 
   const startCamera = useCallback(async () => {
     setError("");
@@ -124,7 +136,7 @@ export function LoMotionStudio() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Camera unavailable");
     }
-  }, [facingMode, loop, stopStream]);
+  }, [facingMode, stopStream]);
 
   useEffect(() => {
     void startCamera();
@@ -134,6 +146,15 @@ export function LoMotionStudio() {
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     };
   }, [startCamera, stopStream]);
+
+  useEffect(() => {
+    if (!streamRef.current) return;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = window.requestAnimationFrame(loop);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [loop, displayScale]);
 
   const startRecording = useCallback(() => {
     if (mode === "processing") return;
@@ -145,8 +166,9 @@ export function LoMotionStudio() {
   }, [mode]);
 
   const stopRecording = useCallback(async () => {
-    if (mode !== "recording") return;
+    if (modeRef.current !== "recording") return;
     setMode("processing");
+    modeRef.current = "processing";
     try {
       if (!framesRef.current.length) {
         renderProcessedFrame(true, performance.now());
@@ -158,11 +180,17 @@ export function LoMotionStudio() {
       setGifBlob(blob);
       setGifUrl(url);
       setMode("review");
+      modeRef.current = "review";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to render GIF");
       setMode("live");
+      modeRef.current = "live";
     }
-  }, [mode, renderProcessedFrame]);
+  }, [renderProcessedFrame]);
+
+  useEffect(() => {
+    stopRecordingRef.current = stopRecording;
+  }, [stopRecording]);
 
   const retake = useCallback(() => {
     if (objectUrlRef.current) {
