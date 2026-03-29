@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+:root {
+  --background: #171916;
+  --foreground: #96b56f;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input {
+  font: inherit;
+}
