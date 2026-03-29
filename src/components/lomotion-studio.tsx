@@ -298,20 +298,12 @@ export function LoMotionStudio() {
             </label>
 
             <div className="flex items-center justify-between gap-4">
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={toggleCamera}
-                  className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]"
-                >
-                  {facingMode === "environment" ? "Rear" : "Front"}
-                </button>
-                <button
-                  onClick={cycleAspectMode}
-                  className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]"
-                >
-                  {aspectLabel}
-                </button>
-              </div>
+              <button
+                onClick={toggleCamera}
+                className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]"
+              >
+                {facingMode === "environment" ? "Rear" : "Front"}
+              </button>
 
               <button
                 onPointerDown={startRecording}
@@ -324,8 +316,16 @@ export function LoMotionStudio() {
                 <span className={`h-8 w-8 rounded-full ${mode === "recording" ? "bg-[#96b56f]" : "border-2 border-[#96b56f]"}`} />
               </button>
 
-              <div className="w-16 text-right font-mono text-xs uppercase tracking-[0.14em] text-[#96b56f]">
-                {mode === "recording" ? `${seconds}s` : "Hold"}
+              <div className="flex flex-col items-end gap-2">
+                <div className="w-16 text-right font-mono text-xs uppercase tracking-[0.14em] text-[#96b56f]">
+                  {mode === "recording" ? `${seconds}s` : "Hold"}
+                </div>
+                <button
+                  onClick={cycleAspectMode}
+                  className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]"
+                >
+                  {aspectLabel}
+                </button>
               </div>
             </div>
           </div>
