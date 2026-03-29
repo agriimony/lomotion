@@ -82,21 +82,34 @@ export function LoMotionStudio() {
     const raw = pctx.getImageData(0, 0, TARGET_WIDTH, targetHeight);
     const quantized = quantizeTo1Bit(raw, thresholdRef.current);
 
-    displayCanvas.width = TARGET_WIDTH * displayScale;
-    displayCanvas.height = targetHeight * displayScale;
+    const viewportWidth = typeof window !== "undefined" ? window.innerWidth : TARGET_WIDTH * displayScale;
+    const viewportHeight = typeof window !== "undefined" ? window.innerHeight : targetHeight * displayScale;
+    displayCanvas.width = viewportWidth;
+    displayCanvas.height = viewportHeight;
     dctx.imageSmoothingEnabled = false;
     dctx.fillStyle = LCD_BLACK;
     dctx.fillRect(0, 0, displayCanvas.width, displayCanvas.height);
+
+    const scaleX = viewportWidth / quantized.width;
+    const scaleY = viewportHeight / quantized.height;
+    const pixelScale = Math.max(scaleX, scaleY);
+    const drawWidth = quantized.width * pixelScale;
+    const drawHeight = quantized.height * pixelScale;
+    const offsetX = (viewportWidth - drawWidth) / 2;
+    const offsetY = (viewportHeight - drawHeight) / 2;
 
     for (let y = 0; y < quantized.height; y += 1) {
       for (let x = 0; x < quantized.width; x += 1) {
         const idx = y * quantized.width + x;
         dctx.fillStyle = quantized.binary[idx] ? LCD_GREEN : LCD_BLACK;
-        dctx.fillRect(x * displayScale, y * displayScale, displayScale, displayScale);
+        dctx.fillRect(offsetX + x * pixelScale, offsetY + y * pixelScale, pixelScale, pixelScale);
       }
     }
 
-    drawPixelGrid(dctx, quantized.width, quantized.height, displayScale);
+    dctx.save();
+    dctx.translate(offsetX, offsetY);
+    drawPixelGrid(dctx, quantized.width, quantized.height, pixelScale);
+    dctx.restore();
 
     if (capture) {
       const interval = 1000 / RECORD_FPS;
@@ -285,13 +298,13 @@ export function LoMotionStudio() {
           <img
             src={gifUrl}
             alt="LoMotion GIF preview"
-            className="h-[100svh] w-[100vw] bg-[#171916] object-cover"
+            className="absolute inset-0 h-full w-full bg-[#171916] object-cover"
             style={{ imageRendering: "pixelated" }}
           />
         ) : (
           <canvas
             ref={displayCanvasRef}
-            className="h-[100svh] w-[100vw] bg-[#171916] object-cover"
+            className="absolute inset-0 h-full w-full bg-[#171916]"
             style={{ imageRendering: "pixelated" }}
           />
         )}
