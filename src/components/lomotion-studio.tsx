@@ -311,7 +311,6 @@ export function LoMotionStudio() {
                 onPointerDown={startRecording}
                 onPointerUp={() => void stopRecording()}
                 onPointerCancel={() => void stopRecording()}
-                onPointerLeave={() => void stopRecording()}
                 className="relative grid h-24 w-24 place-items-center rounded-full bg-[#171916]"
                 aria-label="Hold to record"
               >
