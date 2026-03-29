@@ -8,6 +8,7 @@ import { DEFAULT_THRESHOLD, LCD_BLACK, LCD_GREEN, MAX_RECORD_MS, RECORD_FPS, TAR
 import { quantizeTo1Bit } from "@/lib/quantize";
 
 type Mode = "live" | "recording" | "processing" | "review";
+type AspectMode = "full" | "square" | "classic";
 
 export function LoMotionStudio() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -29,6 +30,7 @@ export function LoMotionStudio() {
   const [gifBlob, setGifBlob] = useState<Blob | null>(null);
   const [error, setError] = useState("");
   const [recordMs, setRecordMs] = useState(0);
+  const [aspectMode, setAspectMode] = useState<AspectMode>("full");
   const [previewSize, setPreviewSize] = useState({ width: TARGET_WIDTH, height: 84 });
 
   useEffect(() => {
@@ -59,7 +61,12 @@ export function LoMotionStudio() {
     if (!video || !displayCanvas || !processCanvas) return;
     if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
 
-    const targetHeight = Math.max(48, Math.round((video.videoHeight / video.videoWidth) * TARGET_WIDTH));
+    const sourceAspect = video.videoHeight / video.videoWidth;
+    const targetHeight = (() => {
+      if (aspectMode === "classic") return 48;
+      if (aspectMode === "square") return TARGET_WIDTH;
+      return Math.max(48, Math.round(sourceAspect * TARGET_WIDTH));
+    })();
     if (processCanvas.width !== TARGET_WIDTH || processCanvas.height !== targetHeight) {
       processCanvas.width = TARGET_WIDTH;
       processCanvas.height = targetHeight;
@@ -101,7 +108,7 @@ export function LoMotionStudio() {
         lastCaptureAtRef.current = now;
       }
     }
-  }, [displayScale]);
+  }, [aspectMode, displayScale]);
 
   const stopRecordingRef = useRef<() => Promise<void>>(async () => {});
 
@@ -232,6 +239,15 @@ export function LoMotionStudio() {
     setFacingMode((prev) => (prev === "environment" ? "user" : "environment"));
   }, []);
 
+  const cycleAspectMode = useCallback(() => {
+    setAspectMode((prev) => {
+      if (prev === "full") return "square";
+      if (prev === "square") return "classic";
+      return "full";
+    });
+  }, []);
+
+  const aspectLabel = aspectMode === "full" ? "Full" : aspectMode === "square" ? "1:1" : "Classic";
   const seconds = Math.min(10, Math.ceil(recordMs / 1000));
 
   return (
@@ -282,12 +298,20 @@ export function LoMotionStudio() {
             </label>
 
             <div className="flex items-center justify-between gap-4">
-              <button
-                onClick={toggleCamera}
-                className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]"
-              >
-                {facingMode === "environment" ? "Rear" : "Front"}
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={toggleCamera}
+                  className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]"
+                >
+                  {facingMode === "environment" ? "Rear" : "Front"}
+                </button>
+                <button
+                  onClick={cycleAspectMode}
+                  className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]"
+                >
+                  {aspectLabel}
+                </button>
+              </div>
 
               <button
                 onPointerDown={startRecording}
@@ -301,7 +325,7 @@ export function LoMotionStudio() {
               </button>
 
               <div className="w-16 text-right font-mono text-xs uppercase tracking-[0.14em] text-[#96b56f]">
-                {mode === "recording" ? `${seconds}s` : `${RECORD_FPS} fps`}
+                {mode === "recording" ? `${seconds}s` : "Hold"}
               </div>
             </div>
           </div>
