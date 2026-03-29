@@ -1,5 +1,5 @@
 import GIF from "gif.js.optimized";
-import { LCD_BLACK, LCD_GREEN, WATERMARK_TEXT } from "@/lib/palette";
+import { LCD_BLACK, LCD_GREEN } from "@/lib/palette";
 import { binaryToImageData } from "@/lib/quantize";
 import { drawPixelGrid } from "@/lib/grid";
 
@@ -32,7 +32,6 @@ export async function encodeGif(frames: CapturedFrame[], fps: number) {
     const imageData = binaryToImageData(frame.binary, width, height);
     ctx.putImageData(imageData, 0, 0);
     drawPixelGrid(ctx, width, height, 1);
-    drawWatermark(ctx, width, height);
     gif.addFrame(canvas, { delay: Math.round(1000 / fps) });
   }
 
@@ -43,13 +42,3 @@ export async function encodeGif(frames: CapturedFrame[], fps: number) {
   });
 }
 
-function drawWatermark(ctx: CanvasRenderingContext2D, width: number, height: number) {
-  ctx.save();
-  ctx.font = `${Math.max(5, Math.floor(width / 14))}px monospace`;
-  ctx.textBaseline = "top";
-  ctx.fillStyle = LCD_BLACK;
-  ctx.fillRect(2, 2, Math.ceil(ctx.measureText(WATERMARK_TEXT).width) + 4, Math.max(8, Math.floor(height / 7)));
-  ctx.fillStyle = LCD_GREEN;
-  ctx.fillText(WATERMARK_TEXT, 4, 3);
-  ctx.restore();
-}

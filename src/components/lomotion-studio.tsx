@@ -319,7 +319,7 @@ export function LoMotionStudio() {
           <img
             src={gifUrl}
             alt="LoMotion GIF preview"
-            className="absolute inset-0 h-full w-full bg-[#171916] object-cover"
+            className={`absolute inset-0 h-full w-full bg-[#171916] ${aspectMode === "full" ? "object-cover" : "object-contain"}`}
             style={{ imageRendering: "pixelated" }}
           />
         ) : (

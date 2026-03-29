@@ -3,7 +3,6 @@ import { LCD_GREEN } from "@/lib/palette";
 export function drawPixelGrid(ctx: CanvasRenderingContext2D, width: number, height: number, scale: number) {
   ctx.save();
   ctx.strokeStyle = LCD_GREEN;
-  ctx.globalAlpha = 0.35;
   ctx.lineWidth = 1;
 
   for (let x = 0; x <= width; x += 1) {
