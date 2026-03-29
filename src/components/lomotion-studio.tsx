@@ -243,18 +243,18 @@ export function LoMotionStudio() {
         LoMotion
       </div>
 
-      <div className="flex min-h-screen items-center justify-center px-4 py-6">
+      <div className="flex min-h-screen items-center justify-center">
         {mode === "review" && gifUrl ? (
           <img
             src={gifUrl}
             alt="LoMotion GIF preview"
-            className="max-h-[100svh] w-auto max-w-full rounded-md border border-[#96b56f]/40 bg-[#171916]"
+            className="h-[100svh] w-[100vw] bg-[#171916] object-contain"
             style={{ imageRendering: "pixelated" }}
           />
         ) : (
           <canvas
             ref={displayCanvasRef}
-            className="max-h-[100svh] w-auto max-w-full rounded-md border border-[#96b56f]/40 bg-[#171916]"
+            className="h-[100svh] w-[100vw] bg-[#171916] object-contain"
             style={{ imageRendering: "pixelated" }}
           />
         )}
