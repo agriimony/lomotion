@@ -293,11 +293,11 @@ export function LoMotionStudio() {
   const recordDashOffset = recordCircumference * (1 - recordProgress);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#171916] text-[#96b56f]">
+    <main className="relative h-[100dvh] min-h-[100dvh] overflow-hidden bg-[#171916] text-[#96b56f]">
       <video ref={videoRef} className="hidden" muted playsInline />
       <canvas ref={processCanvasRef} className="hidden" />
 
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="relative h-[100dvh] w-screen overflow-hidden">
         {mode === "review" && gifUrl ? (
           <img
             src={gifUrl}
