@@ -82,8 +82,12 @@ export function LoMotionStudio() {
     const raw = pctx.getImageData(0, 0, TARGET_WIDTH, targetHeight);
     const quantized = quantizeTo1Bit(raw, thresholdRef.current);
 
-    const viewportWidth = typeof window !== "undefined" ? window.innerWidth : TARGET_WIDTH * displayScale;
-    const viewportHeight = typeof window !== "undefined" ? window.innerHeight : targetHeight * displayScale;
+    const viewportWidth = typeof window !== "undefined"
+      ? Math.round(window.visualViewport?.width || window.innerWidth)
+      : TARGET_WIDTH * displayScale;
+    const viewportHeight = typeof window !== "undefined"
+      ? Math.round(window.visualViewport?.height || window.innerHeight)
+      : targetHeight * displayScale;
     displayCanvas.width = viewportWidth;
     displayCanvas.height = viewportHeight;
     dctx.imageSmoothingEnabled = false;
