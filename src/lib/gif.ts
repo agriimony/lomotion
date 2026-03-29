@@ -15,6 +15,13 @@ export async function encodeGif(frames: CapturedFrame[], fps: number) {
   const exportScale = 6;
   const gifWidth = width * exportScale;
   const gifHeight = height * exportScale;
+  const gridOverlay = document.createElement("canvas");
+  gridOverlay.width = gifWidth;
+  gridOverlay.height = gifHeight;
+  const gridCtx = gridOverlay.getContext("2d");
+  if (!gridCtx) throw new Error("Grid canvas context unavailable");
+  drawPixelGrid(gridCtx, width, height, exportScale);
+
   const gif = new GIF({
     workers: 2,
     quality: 1,
@@ -40,7 +47,7 @@ export async function encodeGif(frames: CapturedFrame[], fps: number) {
         ctx.fillRect(x * exportScale, y * exportScale, exportScale, exportScale);
       }
     }
-    drawPixelGrid(ctx, width, height, exportScale);
+    ctx.drawImage(gridOverlay, 0, 0);
     gif.addFrame(canvas, { delay: Math.round(1000 / fps) });
   }
 
