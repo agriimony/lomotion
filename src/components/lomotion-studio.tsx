@@ -248,7 +248,9 @@ export function LoMotionStudio() {
   }, []);
 
   const aspectLabel = aspectMode === "full" ? "Full" : aspectMode === "square" ? "1:1" : "Classic";
-  const seconds = Math.min(10, Math.ceil(recordMs / 1000));
+  const recordProgress = Math.max(0, Math.min(1, recordMs / MAX_RECORD_MS));
+  const recordCircumference = 2 * Math.PI * 46;
+  const recordDashOffset = recordCircumference * (1 - recordProgress);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#171916] text-[#96b56f]">
@@ -310,18 +312,40 @@ export function LoMotionStudio() {
                 onPointerUp={() => void stopRecording()}
                 onPointerCancel={() => void stopRecording()}
                 onPointerLeave={() => void stopRecording()}
-                className="grid h-20 w-20 place-items-center rounded-full border-4 border-[#96b56f] bg-[#171916]"
+                className="relative grid h-24 w-24 place-items-center rounded-full bg-[#171916]"
                 aria-label="Hold to record"
               >
-                <span className={`h-8 w-8 rounded-full ${mode === "recording" ? "bg-[#96b56f]" : "border-2 border-[#96b56f]"}`} />
+                <svg
+                  className="absolute inset-0 -rotate-90"
+                  viewBox="0 0 100 100"
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="46"
+                    fill="none"
+                    stroke="#96b56f"
+                    strokeOpacity="0.25"
+                    strokeWidth="4"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="46"
+                    fill="none"
+                    stroke="#96b56f"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                    strokeDasharray={recordCircumference}
+                    strokeDashoffset={recordDashOffset}
+                    style={{ transform: "rotate(180deg)", transformOrigin: "50% 50%" }}
+                  />
+                </svg>
+                <span className={`relative z-10 h-10 w-10 rounded-full border-2 border-[#96b56f] ${mode === "recording" ? "bg-[#96b56f]" : "bg-[#171916]"}`} />
               </button>
 
               <div className="flex flex-col items-end gap-2">
-                {mode === "recording" ? (
-                  <div className="w-16 text-right font-mono text-xs uppercase tracking-[0.14em] text-[#96b56f]">
-                    {`${seconds}s`}
-                  </div>
-                ) : null}
                 <button
                   onClick={cycleAspectMode}
                   className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]"
