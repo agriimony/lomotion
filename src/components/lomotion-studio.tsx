@@ -17,6 +17,7 @@ export function LoMotionStudio() {
   const rafRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const framesRef = useRef<CapturedFrame[]>([]);
+  const isPressingRef = useRef(false);
   const modeRef = useRef<Mode>("live");
   const thresholdRef = useRef(DEFAULT_THRESHOLD);
   const recordStartRef = useRef<number>(0);
@@ -164,13 +165,15 @@ export function LoMotionStudio() {
   }, [loop, displayScale]);
 
   const startRecording = useCallback(() => {
-    if (mode === "processing") return;
+    if (modeRef.current === "processing" || modeRef.current === "recording") return;
+    isPressingRef.current = true;
     framesRef.current = [];
     recordStartRef.current = performance.now();
     lastCaptureAtRef.current = 0;
     setRecordMs(0);
     setMode("recording");
-  }, [mode]);
+    modeRef.current = "recording";
+  }, []);
 
   const stopRecording = useCallback(async () => {
     if (modeRef.current !== "recording") return;
@@ -198,6 +201,26 @@ export function LoMotionStudio() {
   useEffect(() => {
     stopRecordingRef.current = stopRecording;
   }, [stopRecording]);
+
+  useEffect(() => {
+    const endPress = () => {
+      if (!isPressingRef.current) return;
+      isPressingRef.current = false;
+      if (modeRef.current === "recording") {
+        void stopRecordingRef.current();
+      }
+    };
+
+    window.addEventListener("pointerup", endPress);
+    window.addEventListener("touchend", endPress);
+    window.addEventListener("mouseup", endPress);
+
+    return () => {
+      window.removeEventListener("pointerup", endPress);
+      window.removeEventListener("touchend", endPress);
+      window.removeEventListener("mouseup", endPress);
+    };
+  }, []);
 
   const retake = useCallback(() => {
     if (objectUrlRef.current) {
@@ -309,22 +332,11 @@ export function LoMotionStudio() {
 
               <button
                 onPointerDown={(e) => {
-                  e.currentTarget.setPointerCapture(e.pointerId);
+                  e.preventDefault();
                   startRecording();
                 }}
-                onPointerUp={(e) => {
-                  if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-                    e.currentTarget.releasePointerCapture(e.pointerId);
-                  }
-                  void stopRecording();
-                }}
-                onPointerCancel={(e) => {
-                  if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-                    e.currentTarget.releasePointerCapture(e.pointerId);
-                  }
-                  void stopRecording();
-                }}
-                className="relative grid h-24 w-24 place-items-center rounded-full bg-[#171916]"
+                className="relative grid h-24 w-24 place-items-center rounded-full bg-[#171916] touch-none select-none"
+                style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
                 aria-label="Hold to record"
               >
                 <svg
