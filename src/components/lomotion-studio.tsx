@@ -289,13 +289,13 @@ export function LoMotionStudio() {
           <img
             src={gifUrl}
             alt="LoMotion GIF preview"
-            className="h-[100svh] w-[100vw] bg-[#171916] object-contain"
+            className="h-[100svh] w-[100vw] bg-[#171916] object-cover"
             style={{ imageRendering: "pixelated" }}
           />
         ) : (
           <canvas
             ref={displayCanvasRef}
-            className="h-[100svh] w-[100vw] bg-[#171916] object-contain"
+            className="h-[100svh] w-[100vw] bg-[#171916] object-cover"
             style={{ imageRendering: "pixelated" }}
           />
         )}
