@@ -78,7 +78,24 @@ export function LoMotionStudio() {
     const dctx = displayCanvas.getContext("2d");
     if (!pctx || !dctx) return;
 
-    pctx.drawImage(video, 0, 0, TARGET_WIDTH, targetHeight);
+    const targetAspect = targetHeight / TARGET_WIDTH;
+    const videoAspect = video.videoHeight / video.videoWidth;
+    let sx = 0;
+    let sy = 0;
+    let sWidth = video.videoWidth;
+    let sHeight = video.videoHeight;
+
+    if (aspectMode !== "full") {
+      if (videoAspect > targetAspect) {
+        sHeight = video.videoWidth * targetAspect;
+        sy = (video.videoHeight - sHeight) / 2;
+      } else if (videoAspect < targetAspect) {
+        sWidth = video.videoHeight / targetAspect;
+        sx = (video.videoWidth - sWidth) / 2;
+      }
+    }
+
+    pctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, TARGET_WIDTH, targetHeight);
     const raw = pctx.getImageData(0, 0, TARGET_WIDTH, targetHeight);
     const quantized = quantizeTo1Bit(raw, thresholdRef.current);
 
