@@ -280,10 +280,6 @@ export function LoMotionStudio() {
       <video ref={videoRef} className="hidden" muted playsInline />
       <canvas ref={processCanvasRef} className="hidden" />
 
-      <div className="pointer-events-none absolute left-4 top-4 z-20 font-mono text-sm tracking-[0.2em] text-[#96b56f]">
-        LoMotion
-      </div>
-
       <div className="flex min-h-screen items-center justify-center">
         {mode === "review" && gifUrl ? (
           <img
