@@ -308,9 +308,22 @@ export function LoMotionStudio() {
               </button>
 
               <button
-                onPointerDown={startRecording}
-                onPointerUp={() => void stopRecording()}
-                onPointerCancel={() => void stopRecording()}
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  startRecording();
+                }}
+                onPointerUp={(e) => {
+                  if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                  }
+                  void stopRecording();
+                }}
+                onPointerCancel={(e) => {
+                  if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                  }
+                  void stopRecording();
+                }}
                 className="relative grid h-24 w-24 place-items-center rounded-full bg-[#171916]"
                 aria-label="Hold to record"
               >
