@@ -1,6 +1,7 @@
 import GIF from "gif.js.optimized";
 import { LCD_BLACK, LCD_GREEN, WATERMARK_TEXT } from "@/lib/palette";
 import { binaryToImageData } from "@/lib/quantize";
+import { drawPixelGrid } from "@/lib/grid";
 
 export type CapturedFrame = {
   binary: Uint8Array;
@@ -30,6 +31,7 @@ export async function encodeGif(frames: CapturedFrame[], fps: number) {
 
     const imageData = binaryToImageData(frame.binary, width, height);
     ctx.putImageData(imageData, 0, 0);
+    drawPixelGrid(ctx, width, height, 1);
     drawWatermark(ctx, width, height);
     gif.addFrame(canvas, { delay: Math.round(1000 / fps) });
   }
