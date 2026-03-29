@@ -317,9 +317,11 @@ export function LoMotionStudio() {
               </button>
 
               <div className="flex flex-col items-end gap-2">
-                <div className="w-16 text-right font-mono text-xs uppercase tracking-[0.14em] text-[#96b56f]">
-                  {mode === "recording" ? `${seconds}s` : "Hold"}
-                </div>
+                {mode === "recording" ? (
+                  <div className="w-16 text-right font-mono text-xs uppercase tracking-[0.14em] text-[#96b56f]">
+                    {`${seconds}s`}
+                  </div>
+                ) : null}
                 <button
                   onClick={cycleAspectMode}
                   className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]"
