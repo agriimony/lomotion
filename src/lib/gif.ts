@@ -1,20 +1,17 @@
 import GIF from "gif.js.optimized";
-import { LCD_BLACK } from "@/lib/palette";
+import { LCD_BLACK, LCD_GREEN } from "@/lib/palette";
 import { drawPixelGrid } from "@/lib/grid";
-import { getLcdPalette } from "@/lib/quantize";
 
 export type CapturedFrame = {
-  levels: Uint8Array;
+  binary: Uint8Array;
   width: number;
   height: number;
-  levelsCount: number;
 };
 
-export async function encodeGif(frames: CapturedFrame[], fps: number) {
+export async function encodeGif(frames: CapturedFrame[], fps: number, ghostOpacity = 0) {
   if (!frames.length) throw new Error("No frames to encode");
 
-  const { width, height, levelsCount } = frames[0];
-  const palette = getLcdPalette(levelsCount);
+  const { width, height } = frames[0];
   const exportScale = 4;
   const gifWidth = width * exportScale;
   const gifHeight = height * exportScale;
@@ -34,7 +31,9 @@ export async function encodeGif(frames: CapturedFrame[], fps: number) {
     repeat: 0,
   });
 
-  for (const frame of frames) {
+  for (let frameIndex = 0; frameIndex < frames.length; frameIndex += 1) {
+    const frame = frames[frameIndex];
+    const prev = frameIndex > 0 ? frames[frameIndex - 1] : null;
     const canvas = document.createElement("canvas");
     canvas.width = gifWidth;
     canvas.height = gifHeight;
@@ -43,13 +42,30 @@ export async function encodeGif(frames: CapturedFrame[], fps: number) {
 
     ctx.fillStyle = LCD_BLACK;
     ctx.fillRect(0, 0, gifWidth, gifHeight);
+
+    if (prev && ghostOpacity > 0) {
+      ctx.save();
+      ctx.globalAlpha = ghostOpacity;
+      ctx.fillStyle = LCD_BLACK;
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const idx = y * width + x;
+          if (!prev.binary[idx]) continue;
+          ctx.fillRect(x * exportScale, y * exportScale, exportScale, exportScale);
+        }
+      }
+      ctx.restore();
+    }
+
+    ctx.fillStyle = LCD_GREEN;
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const idx = y * width + x;
-        ctx.fillStyle = palette[frame.levels[idx]] || palette[0];
+        if (!frame.binary[idx]) continue;
         ctx.fillRect(x * exportScale, y * exportScale, exportScale, exportScale);
       }
     }
+
     ctx.drawImage(gridOverlay, 0, 0);
     gif.addFrame(canvas, { delay: Math.round(1000 / fps) });
   }

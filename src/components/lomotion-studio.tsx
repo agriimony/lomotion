@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getCameraConstraints } from "@/lib/camera";
 import { drawPixelGrid } from "@/lib/grid";
 import { encodeGif, type CapturedFrame } from "@/lib/gif";
-import { DEFAULT_THRESHOLD, LCD_BLACK, MAX_RECORD_MS, RECORD_FPS, TARGET_WIDTH } from "@/lib/palette";
-import { getLcdPalette, quantizeFrame } from "@/lib/quantize";
+import { DEFAULT_THRESHOLD, LCD_BLACK, LCD_GREEN, MAX_RECORD_MS, RECORD_FPS, TARGET_WIDTH } from "@/lib/palette";
+import { quantizeFrame } from "@/lib/quantize";
 
 type Mode = "live" | "recording" | "processing" | "review";
 type AspectMode = "full" | "square" | "classic";
@@ -18,7 +18,7 @@ export function LoMotionStudio() {
   const rafRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const framesRef = useRef<CapturedFrame[]>([]);
-  const previousLumaRef = useRef<Float32Array | null>(null);
+  const previousFrameRef = useRef<Uint8Array | null>(null);
   const isPressingRef = useRef(false);
   const modeRef = useRef<Mode>("live");
   const thresholdRef = useRef(DEFAULT_THRESHOLD);
@@ -100,11 +100,8 @@ export function LoMotionStudio() {
 
     pctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, TARGET_WIDTH, targetHeight);
     const raw = pctx.getImageData(0, 0, TARGET_WIDTH, targetHeight);
-    const ghostPersistence = ghostMode === "high" ? 0.6 : ghostMode === "low" ? 0.35 : 0;
-    const levelsCount = ghostMode === "off" ? 2 : 4;
-    const quantized = quantizeFrame(raw, thresholdRef.current, previousLumaRef.current, ghostPersistence, levelsCount);
-    previousLumaRef.current = quantized.luma;
-    const palette = getLcdPalette(levelsCount);
+    const ghostOpacity = ghostMode === "high" ? 0.6 : ghostMode === "low" ? 0.2 : 0;
+    const quantized = quantizeFrame(raw, thresholdRef.current);
 
     const viewportWidth = typeof window !== "undefined"
       ? Math.round(window.visualViewport?.width || window.innerWidth)
@@ -129,24 +126,39 @@ export function LoMotionStudio() {
     for (let y = 0; y < quantized.height; y += 1) {
       for (let x = 0; x < quantized.width; x += 1) {
         const idx = y * quantized.width + x;
-        dctx.fillStyle = palette[quantized.levels[idx]] || LCD_BLACK;
+        if (!quantized.binary[idx]) continue;
+        dctx.fillStyle = LCD_GREEN;
         dctx.fillRect(offsetX + x * pixelScale, offsetY + y * pixelScale, pixelScale, pixelScale);
       }
+    }
+
+    if (previousFrameRef.current && ghostOpacity > 0) {
+      dctx.save();
+      dctx.globalAlpha = ghostOpacity;
+      dctx.fillStyle = LCD_BLACK;
+      for (let y = 0; y < quantized.height; y += 1) {
+        for (let x = 0; x < quantized.width; x += 1) {
+          const idx = y * quantized.width + x;
+          if (!previousFrameRef.current[idx]) continue;
+          dctx.fillRect(offsetX + x * pixelScale, offsetY + y * pixelScale, pixelScale, pixelScale);
+        }
+      }
+      dctx.restore();
     }
 
     dctx.save();
     dctx.translate(offsetX, offsetY);
     drawPixelGrid(dctx, quantized.width, quantized.height, pixelScale);
     dctx.restore();
+    previousFrameRef.current = new Uint8Array(quantized.binary);
 
     if (capture) {
       const interval = 1000 / RECORD_FPS;
       if ((now - lastCaptureAtRef.current) >= interval) {
         framesRef.current.push({
-          levels: new Uint8Array(quantized.levels),
+          binary: new Uint8Array(quantized.binary),
           width: quantized.width,
           height: quantized.height,
-          levelsCount,
         });
         lastCaptureAtRef.current = now;
       }
@@ -210,7 +222,7 @@ export function LoMotionStudio() {
     if (modeRef.current === "processing" || modeRef.current === "recording") return;
     isPressingRef.current = true;
     framesRef.current = [];
-    previousLumaRef.current = null;
+    previousFrameRef.current = null;
     recordStartRef.current = performance.now();
     lastCaptureAtRef.current = 0;
     setRecordMs(0);
@@ -226,7 +238,7 @@ export function LoMotionStudio() {
       if (!framesRef.current.length) {
         renderProcessedFrame(true, performance.now());
       }
-      const blob = await encodeGif(framesRef.current, RECORD_FPS);
+      const blob = await encodeGif(framesRef.current, RECORD_FPS, ghostMode === "high" ? 0.6 : ghostMode === "low" ? 0.2 : 0);
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
@@ -238,7 +250,7 @@ export function LoMotionStudio() {
       setError(err instanceof Error ? err.message : "Failed to render GIF");
       setMode("live");
       modeRef.current = "live";
-      previousLumaRef.current = null;
+      previousFrameRef.current = null;
     }
   }, [renderProcessedFrame]);
 
@@ -272,7 +284,7 @@ export function LoMotionStudio() {
       objectUrlRef.current = null;
     }
     framesRef.current = [];
-    previousLumaRef.current = null;
+    previousFrameRef.current = null;
     setGifBlob(null);
     setGifUrl("");
     setRecordMs(0);
