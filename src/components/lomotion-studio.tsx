@@ -413,11 +413,11 @@ export function LoMotionStudio() {
             <div className="relative flex items-center justify-center">
               <button
                 onClick={toggleCamera}
-                className="absolute left-0 grid h-12 w-12 place-items-center rounded-full border border-[#96b56f] bg-[#171916] font-mono text-lg"
+                className="absolute left-0 grid h-12 w-12 place-items-center rounded-full border border-[#96b56f] bg-[#171916] text-[#96b56f]"
                 aria-label="Flip camera"
                 title={facingMode === "environment" ? "Rear camera" : "Front camera"}
               >
-                🔄
+                <FlipCameraIcon />
               </button>
 
               <button
@@ -461,11 +461,11 @@ export function LoMotionStudio() {
 
               <button
                 onClick={cycleAspectMode}
-                className="absolute right-0 grid h-12 w-12 place-items-center rounded-full border border-[#96b56f] bg-[#171916] font-mono text-lg"
+                className="absolute right-0 grid h-12 w-12 place-items-center rounded-full border border-[#96b56f] bg-[#171916] text-[#96b56f]"
                 aria-label={`Aspect ratio: ${aspectLabel}`}
                 title={aspectLabel}
               >
-                {aspectIcon}
+                <AspectIcon mode={aspectMode} />
               </button>
             </div>
           </div>
