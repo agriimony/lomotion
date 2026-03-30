@@ -50,7 +50,7 @@ export async function encodeGif(frames: CapturedFrame[], fps: number, ghostOpaci
       for (let y = 0; y < height; y += 1) {
         for (let x = 0; x < width; x += 1) {
           const idx = y * width + x;
-          if (!prev.binary[idx]) continue;
+          if (prev.binary[idx] != 0 || frame.binary[idx] != 1) continue;
           ctx.fillRect(x * exportScale, y * exportScale, exportScale, exportScale);
         }
       }

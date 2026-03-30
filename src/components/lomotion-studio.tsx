@@ -139,7 +139,9 @@ export function LoMotionStudio() {
       for (let y = 0; y < quantized.height; y += 1) {
         for (let x = 0; x < quantized.width; x += 1) {
           const idx = y * quantized.width + x;
-          if (!previousFrameRef.current[idx]) continue;
+          const prev = previousFrameRef.current[idx];
+          const curr = quantized.binary[idx];
+          if (prev !== 0 || curr !== 1) continue;
           dctx.fillRect(offsetX + x * pixelScale, offsetY + y * pixelScale, pixelScale, pixelScale);
         }
       }
