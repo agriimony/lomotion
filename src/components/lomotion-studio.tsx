@@ -7,6 +7,7 @@ import { encodeGif, type CapturedFrame } from "@/lib/gif";
 import { DEFAULT_THRESHOLD, LCD_BLACK, LCD_GREEN, MAX_RECORD_MS, RECORD_FPS, TARGET_WIDTH } from "@/lib/palette";
 import { quantizeFrame } from "@/lib/quantize";
 import { LOGO_BITMAP, LOGO_OFFSET_X, LOGO_OFFSET_Y } from "@/lib/logo-mask";
+import { triggerHaptic } from "@/lib/haptics";
 
 type Mode = "live" | "recording" | "processing" | "review";
 type AspectMode = "full" | "square" | "classic";
@@ -58,6 +59,7 @@ export function LoMotionStudio() {
   const thresholdRef = useRef(DEFAULT_THRESHOLD);
   const recordStartRef = useRef<number>(0);
   const lastCaptureAtRef = useRef<number>(0);
+  const lastSecondHapticRef = useRef<number>(0);
   const objectUrlRef = useRef<string | null>(null);
 
   const [mode, setMode] = useState<Mode>("live");
@@ -211,6 +213,11 @@ export function LoMotionStudio() {
     if (isRecording) {
       const elapsed = now - recordStartRef.current;
       setRecordMs(elapsed);
+      const wholeSeconds = Math.floor(elapsed / 1000);
+      if (wholeSeconds > 0 && wholeSeconds !== lastSecondHapticRef.current) {
+        lastSecondHapticRef.current = wholeSeconds;
+        triggerHaptic("light");
+      }
       if (elapsed >= MAX_RECORD_MS) {
         void stopRecordingRef.current();
         return;
@@ -261,13 +268,16 @@ export function LoMotionStudio() {
     framesRef.current = [];
     recordStartRef.current = performance.now();
     lastCaptureAtRef.current = 0;
+    lastSecondHapticRef.current = 0;
     setRecordMs(0);
+    triggerHaptic("medium");
     setMode("recording");
     modeRef.current = "recording";
   }, []);
 
   const stopRecording = useCallback(async () => {
     if (modeRef.current !== "recording") return;
+    triggerHaptic("medium");
     setMode("processing");
     modeRef.current = "processing";
     try {
@@ -328,6 +338,7 @@ export function LoMotionStudio() {
   const saveGif = useCallback(() => {
     if (!gifBlob) return;
     const url = URL.createObjectURL(gifBlob);
+    triggerHaptic("success");
     const a = document.createElement("a");
     a.href = url;
     a.download = `lomotion-${Date.now()}.gif`;
@@ -341,6 +352,7 @@ export function LoMotionStudio() {
     try {
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: "LoMotion", text: "Made with LoMotion" });
+        triggerHaptic("success");
       } else {
         saveGif();
       }
@@ -350,10 +362,12 @@ export function LoMotionStudio() {
   }, [gifBlob, saveGif]);
 
   const toggleCamera = useCallback(() => {
+    triggerHaptic("light");
     setFacingMode((prev) => (prev === "environment" ? "user" : "environment"));
   }, []);
 
   const cycleAspectMode = useCallback(() => {
+    triggerHaptic("light");
     setAspectMode((prev) => {
       if (prev === "full") return "square";
       if (prev === "square") return "classic";
