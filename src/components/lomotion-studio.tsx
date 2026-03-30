@@ -11,6 +11,41 @@ import { LOGO_BITMAP, LOGO_OFFSET_X, LOGO_OFFSET_Y } from "@/lib/logo-mask";
 type Mode = "live" | "recording" | "processing" | "review";
 type AspectMode = "full" | "square" | "classic";
 
+function FlipCameraIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <rect x="3.5" y="7" width="17" height="10" rx="2" />
+      <path d="M9 4.5h6" />
+      <path d="M8 11c.8-1.2 2.2-2 4-2 1.2 0 2.3.4 3.1 1.1" />
+      <path d="M14.8 9.8l.9.3-.3.9" />
+      <path d="M16 13c-.8 1.2-2.2 2-4 2-1.2 0-2.3-.4-3.1-1.1" />
+      <path d="M9.2 14.2l-.9-.3.3-.9" />
+    </svg>
+  );
+}
+
+function AspectIcon({ mode }: { mode: AspectMode }) {
+  if (mode === "full") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <rect x="7" y="3.5" width="10" height="17" rx="2" />
+      </svg>
+    );
+  }
+  if (mode === "square") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <rect x="5.5" y="5.5" width="13" height="13" rx="2" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <rect x="4" y="7" width="16" height="10" rx="2" />
+    </svg>
+  );
+}
+
 export function LoMotionStudio() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const displayCanvasRef = useRef<HTMLCanvasElement | null>(null);
