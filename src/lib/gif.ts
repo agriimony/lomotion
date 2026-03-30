@@ -12,7 +12,7 @@ export async function encodeGif(frames: CapturedFrame[], fps: number) {
   if (!frames.length) throw new Error("No frames to encode");
 
   const { width, height } = frames[0];
-  const exportScale = 6;
+  const exportScale = 4;
   const gifWidth = width * exportScale;
   const gifHeight = height * exportScale;
   const gridOverlay = document.createElement("canvas");
