@@ -1,17 +1,20 @@
 import GIF from "gif.js.optimized";
-import { LCD_BLACK, LCD_GREEN } from "@/lib/palette";
+import { LCD_BLACK } from "@/lib/palette";
 import { drawPixelGrid } from "@/lib/grid";
+import { getLcdPalette } from "@/lib/quantize";
 
 export type CapturedFrame = {
-  binary: Uint8Array;
+  levels: Uint8Array;
   width: number;
   height: number;
+  levelsCount: number;
 };
 
 export async function encodeGif(frames: CapturedFrame[], fps: number) {
   if (!frames.length) throw new Error("No frames to encode");
 
-  const { width, height } = frames[0];
+  const { width, height, levelsCount } = frames[0];
+  const palette = getLcdPalette(levelsCount);
   const exportScale = 4;
   const gifWidth = width * exportScale;
   const gifHeight = height * exportScale;
@@ -43,7 +46,7 @@ export async function encodeGif(frames: CapturedFrame[], fps: number) {
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const idx = y * width + x;
-        ctx.fillStyle = frame.binary[idx] ? LCD_GREEN : LCD_BLACK;
+        ctx.fillStyle = palette[frame.levels[idx]] || palette[0];
         ctx.fillRect(x * exportScale, y * exportScale, exportScale, exportScale);
       }
     }
@@ -57,4 +60,3 @@ export async function encodeGif(frames: CapturedFrame[], fps: number) {
     gif.render();
   });
 }
-

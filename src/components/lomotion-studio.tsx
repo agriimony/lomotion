@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getCameraConstraints } from "@/lib/camera";
 import { drawPixelGrid } from "@/lib/grid";
 import { encodeGif, type CapturedFrame } from "@/lib/gif";
-import { DEFAULT_THRESHOLD, LCD_BLACK, LCD_GREEN, MAX_RECORD_MS, RECORD_FPS, TARGET_WIDTH } from "@/lib/palette";
-import { quantizeTo1Bit } from "@/lib/quantize";
+import { DEFAULT_THRESHOLD, LCD_BLACK, MAX_RECORD_MS, RECORD_FPS, TARGET_WIDTH } from "@/lib/palette";
+import { getLcdPalette, quantizeFrame } from "@/lib/quantize";
 
 type Mode = "live" | "recording" | "processing" | "review";
 type AspectMode = "full" | "square" | "classic";
@@ -100,9 +100,11 @@ export function LoMotionStudio() {
 
     pctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, TARGET_WIDTH, targetHeight);
     const raw = pctx.getImageData(0, 0, TARGET_WIDTH, targetHeight);
-    const ghostPersistence = ghostMode === "high" ? 0.3 : ghostMode === "low" ? 0.15 : 0;
-    const quantized = quantizeTo1Bit(raw, thresholdRef.current, previousLumaRef.current, ghostPersistence);
+    const ghostPersistence = ghostMode === "high" ? 0.6 : ghostMode === "low" ? 0.35 : 0;
+    const levelsCount = ghostMode === "off" ? 2 : 4;
+    const quantized = quantizeFrame(raw, thresholdRef.current, previousLumaRef.current, ghostPersistence, levelsCount);
     previousLumaRef.current = quantized.luma;
+    const palette = getLcdPalette(levelsCount);
 
     const viewportWidth = typeof window !== "undefined"
       ? Math.round(window.visualViewport?.width || window.innerWidth)
@@ -127,7 +129,7 @@ export function LoMotionStudio() {
     for (let y = 0; y < quantized.height; y += 1) {
       for (let x = 0; x < quantized.width; x += 1) {
         const idx = y * quantized.width + x;
-        dctx.fillStyle = quantized.binary[idx] ? LCD_GREEN : LCD_BLACK;
+        dctx.fillStyle = palette[quantized.levels[idx]] || LCD_BLACK;
         dctx.fillRect(offsetX + x * pixelScale, offsetY + y * pixelScale, pixelScale, pixelScale);
       }
     }
@@ -141,9 +143,10 @@ export function LoMotionStudio() {
       const interval = 1000 / RECORD_FPS;
       if ((now - lastCaptureAtRef.current) >= interval) {
         framesRef.current.push({
-          binary: new Uint8Array(quantized.binary),
+          levels: new Uint8Array(quantized.levels),
           width: quantized.width,
           height: quantized.height,
+          levelsCount,
         });
         lastCaptureAtRef.current = now;
       }
