@@ -1,9 +1,15 @@
 import { LCD_GREEN } from "@/lib/palette";
 
-export function drawPixelGrid(ctx: CanvasRenderingContext2D, width: number, height: number, scale: number) {
+export function drawPixelGrid(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  scale: number,
+  lineWidth = 1,
+) {
   ctx.save();
   ctx.strokeStyle = LCD_GREEN;
-  ctx.lineWidth = 1;
+  ctx.lineWidth = lineWidth;
 
   for (let x = 0; x <= width; x += 1) {
     const px = Math.round(x * scale) + 0.5;
