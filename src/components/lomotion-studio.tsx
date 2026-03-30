@@ -10,6 +10,14 @@ import { quantizeFrame } from "@/lib/quantize";
 type Mode = "live" | "recording" | "processing" | "review";
 type AspectMode = "full" | "square" | "classic";
 
+const LOGO_BITMAP = [
+  "1000000000000000",
+  "1000110110110110",
+  "1001001001001001",
+  "1001001001001001",
+  "1110110100010110",
+] as const;
+
 export function LoMotionStudio() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const displayCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -130,6 +138,25 @@ export function LoMotionStudio() {
         dctx.fillRect(offsetX + x * pixelScale, offsetY + y * pixelScale, pixelScale, pixelScale);
       }
     }
+
+    const logoOffsetX = 5;
+    const logoOffsetY = 5;
+    dctx.save();
+    for (let y = 0; y < LOGO_BITMAP.length; y += 1) {
+      const row = LOGO_BITMAP[y];
+      for (let x = 0; x < row.length; x += 1) {
+        if (row[x] !== "1") continue;
+        const px = logoOffsetX + x;
+        const py = logoOffsetY + y;
+        if (px < 0 || py < 0 || px >= quantized.width || py >= quantized.height) continue;
+        const drawX = offsetX + px * pixelScale;
+        const drawY = offsetY + py * pixelScale;
+        const idx = py * quantized.width + px;
+        dctx.fillStyle = quantized.binary[idx] ? LCD_GREEN : LCD_BLACK;
+        dctx.fillRect(drawX, drawY, pixelScale, pixelScale);
+      }
+    }
+    dctx.restore();
 
     dctx.save();
     dctx.translate(offsetX, offsetY);
