@@ -327,6 +327,7 @@ export function LoMotionStudio() {
   }, []);
 
   const aspectLabel = aspectMode === "full" ? "Full" : aspectMode === "square" ? "1:1" : "Classic";
+  const aspectIcon = aspectMode === "full" ? "▭" : aspectMode === "square" ? "□" : "▦";
   const recordProgress = Math.max(0, Math.min(1, recordMs / MAX_RECORD_MS));
   const recordCircumference = 2 * Math.PI * 46;
   const recordDashOffset = recordCircumference * (1 - recordProgress);
@@ -374,12 +375,14 @@ export function LoMotionStudio() {
               />
             </label>
 
-            <div className="flex items-center justify-between gap-4">
+            <div className="relative flex items-center justify-center">
               <button
                 onClick={toggleCamera}
-                className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]"
+                className="absolute left-0 grid h-12 w-12 place-items-center rounded-full border border-[#96b56f] bg-[#171916] font-mono text-lg"
+                aria-label="Flip camera"
+                title={facingMode === "environment" ? "Rear camera" : "Front camera"}
               >
-                {facingMode === "environment" ? "Rear" : "Front"}
+                🔄
               </button>
 
               <button
@@ -421,14 +424,14 @@ export function LoMotionStudio() {
                 <span className={`relative z-10 h-10 w-10 rounded-full border-2 border-[#96b56f] ${mode === "recording" ? "bg-[#96b56f]" : "bg-[#171916]"}`} />
               </button>
 
-              <div className="flex flex-col items-end gap-2">
-                <button
-                  onClick={cycleAspectMode}
-                  className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]"
-                >
-                  {aspectLabel}
-                </button>
-              </div>
+              <button
+                onClick={cycleAspectMode}
+                className="absolute right-0 grid h-12 w-12 place-items-center rounded-full border border-[#96b56f] bg-[#171916] font-mono text-lg"
+                aria-label={`Aspect ratio: ${aspectLabel}`}
+                title={aspectLabel}
+              >
+                {aspectIcon}
+              </button>
             </div>
           </div>
         </div>
