@@ -87,11 +87,11 @@ export function LoMotionStudio() {
 
     if (aspectMode !== "full") {
       if (videoAspect > targetAspect) {
-        sHeight = video.videoWidth * targetAspect;
-        sy = (video.videoHeight - sHeight) / 2;
+        sHeight = Math.round(video.videoWidth * targetAspect);
+        sy = Math.round((video.videoHeight - sHeight) / 2);
       } else if (videoAspect < targetAspect) {
-        sWidth = video.videoHeight / targetAspect;
-        sx = (video.videoWidth - sWidth) / 2;
+        sWidth = Math.round(video.videoHeight / targetAspect);
+        sx = Math.round((video.videoWidth - sWidth) / 2);
       }
     }
 
@@ -108,7 +108,7 @@ export function LoMotionStudio() {
     displayCanvas.width = viewportWidth;
     displayCanvas.height = viewportHeight;
     dctx.imageSmoothingEnabled = false;
-    dctx.fillStyle = LCD_GREEN;
+    dctx.fillStyle = "#000000";
     dctx.fillRect(0, 0, displayCanvas.width, displayCanvas.height);
 
     const scaleX = viewportWidth / quantized.width;
@@ -118,6 +118,9 @@ export function LoMotionStudio() {
     const drawHeight = quantized.height * pixelScale;
     const offsetX = (viewportWidth - drawWidth) / 2;
     const offsetY = (viewportHeight - drawHeight) / 2;
+
+    dctx.fillStyle = LCD_GREEN;
+    dctx.fillRect(offsetX, offsetY, drawWidth, drawHeight);
 
     for (let y = 0; y < quantized.height; y += 1) {
       for (let x = 0; x < quantized.width; x += 1) {
