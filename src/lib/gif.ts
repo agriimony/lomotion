@@ -40,7 +40,7 @@ export async function encodeGif(frames: CapturedFrame[], fps: number, ghostOpaci
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Canvas context unavailable");
 
-    ctx.fillStyle = LCD_BLACK;
+    ctx.fillStyle = LCD_GREEN;
     ctx.fillRect(0, 0, gifWidth, gifHeight);
 
     if (prev && ghostOpacity > 0) {
