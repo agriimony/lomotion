@@ -8,7 +8,7 @@ export type CapturedFrame = {
   height: number;
 };
 
-export async function encodeGif(frames: CapturedFrame[], fps: number, ghostOpacity = 0) {
+export async function encodeGif(frames: CapturedFrame[], fps: number) {
   if (!frames.length) throw new Error("No frames to encode");
 
   const { width, height } = frames[0];
@@ -33,7 +33,6 @@ export async function encodeGif(frames: CapturedFrame[], fps: number, ghostOpaci
 
   for (let frameIndex = 0; frameIndex < frames.length; frameIndex += 1) {
     const frame = frames[frameIndex];
-    const prev = frameIndex > 0 ? frames[frameIndex - 1] : null;
     const canvas = document.createElement("canvas");
     canvas.width = gifWidth;
     canvas.height = gifHeight;
@@ -42,20 +41,6 @@ export async function encodeGif(frames: CapturedFrame[], fps: number, ghostOpaci
 
     ctx.fillStyle = LCD_GREEN;
     ctx.fillRect(0, 0, gifWidth, gifHeight);
-
-    if (prev && ghostOpacity > 0) {
-      ctx.save();
-      ctx.globalAlpha = ghostOpacity;
-      ctx.fillStyle = LCD_BLACK;
-      for (let y = 0; y < height; y += 1) {
-        for (let x = 0; x < width; x += 1) {
-          const idx = y * width + x;
-          if (prev.binary[idx] != 1 || frame.binary[idx] != 0) continue;
-          ctx.fillRect(x * exportScale, y * exportScale, exportScale, exportScale);
-        }
-      }
-      ctx.restore();
-    }
 
     ctx.fillStyle = LCD_BLACK;
     for (let y = 0; y < height; y += 1) {

@@ -9,7 +9,6 @@ import { quantizeFrame } from "@/lib/quantize";
 
 type Mode = "live" | "recording" | "processing" | "review";
 type AspectMode = "full" | "square" | "classic";
-type GhostMode = "off" | "low" | "high";
 
 export function LoMotionStudio() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -18,7 +17,6 @@ export function LoMotionStudio() {
   const rafRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const framesRef = useRef<CapturedFrame[]>([]);
-  const previousFrameRef = useRef<Uint8Array | null>(null);
   const isPressingRef = useRef(false);
   const modeRef = useRef<Mode>("live");
   const thresholdRef = useRef(DEFAULT_THRESHOLD);
@@ -34,7 +32,6 @@ export function LoMotionStudio() {
   const [error, setError] = useState("");
   const [recordMs, setRecordMs] = useState(0);
   const [aspectMode, setAspectMode] = useState<AspectMode>("full");
-  const [ghostMode, setGhostMode] = useState<GhostMode>("off");
   const [previewSize, setPreviewSize] = useState({ width: TARGET_WIDTH, height: 84 });
 
   useEffect(() => {
@@ -100,7 +97,6 @@ export function LoMotionStudio() {
 
     pctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, TARGET_WIDTH, targetHeight);
     const raw = pctx.getImageData(0, 0, TARGET_WIDTH, targetHeight);
-    const ghostOpacity = ghostMode === "high" ? 0.6 : ghostMode === "low" ? 0.2 : 0;
     const quantized = quantizeFrame(raw, thresholdRef.current);
 
     const viewportWidth = typeof window !== "undefined"
@@ -132,27 +128,10 @@ export function LoMotionStudio() {
       }
     }
 
-    if (previousFrameRef.current && ghostOpacity > 0) {
-      dctx.save();
-      dctx.globalAlpha = ghostOpacity;
-      dctx.fillStyle = LCD_BLACK;
-      for (let y = 0; y < quantized.height; y += 1) {
-        for (let x = 0; x < quantized.width; x += 1) {
-          const idx = y * quantized.width + x;
-          const prev = previousFrameRef.current[idx];
-          const curr = quantized.binary[idx];
-          if (prev !== 1 || curr !== 0) continue;
-          dctx.fillRect(offsetX + x * pixelScale, offsetY + y * pixelScale, pixelScale, pixelScale);
-        }
-      }
-      dctx.restore();
-    }
-
     dctx.save();
     dctx.translate(offsetX, offsetY);
     drawPixelGrid(dctx, quantized.width, quantized.height, pixelScale);
     dctx.restore();
-    previousFrameRef.current = new Uint8Array(quantized.binary);
 
     if (capture) {
       const interval = 1000 / RECORD_FPS;
@@ -165,7 +144,7 @@ export function LoMotionStudio() {
         lastCaptureAtRef.current = now;
       }
     }
-  }, [aspectMode, displayScale, ghostMode]);
+  }, [aspectMode, displayScale]);
 
   const stopRecordingRef = useRef<() => Promise<void>>(async () => {});
 
@@ -224,7 +203,6 @@ export function LoMotionStudio() {
     if (modeRef.current === "processing" || modeRef.current === "recording") return;
     isPressingRef.current = true;
     framesRef.current = [];
-    previousFrameRef.current = null;
     recordStartRef.current = performance.now();
     lastCaptureAtRef.current = 0;
     setRecordMs(0);
@@ -240,7 +218,7 @@ export function LoMotionStudio() {
       if (!framesRef.current.length) {
         renderProcessedFrame(true, performance.now());
       }
-      const blob = await encodeGif(framesRef.current, RECORD_FPS, ghostMode === "high" ? 0.6 : ghostMode === "low" ? 0.2 : 0);
+      const blob = await encodeGif(framesRef.current, RECORD_FPS);
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
@@ -252,8 +230,7 @@ export function LoMotionStudio() {
       setError(err instanceof Error ? err.message : "Failed to render GIF");
       setMode("live");
       modeRef.current = "live";
-      previousFrameRef.current = null;
-    }
+      }
   }, [renderProcessedFrame]);
 
   useEffect(() => {
@@ -286,7 +263,6 @@ export function LoMotionStudio() {
       objectUrlRef.current = null;
     }
     framesRef.current = [];
-    previousFrameRef.current = null;
     setGifBlob(null);
     setGifUrl("");
     setRecordMs(0);
@@ -330,7 +306,6 @@ export function LoMotionStudio() {
   }, []);
 
   const aspectLabel = aspectMode === "full" ? "Full" : aspectMode === "square" ? "1:1" : "Classic";
-  const ghostLabel = ghostMode === "off" ? "Ghost Off" : ghostMode === "low" ? "Ghost Low" : "Ghost High";
   const recordProgress = Math.max(0, Math.min(1, recordMs / MAX_RECORD_MS));
   const recordCircumference = 2 * Math.PI * 46;
   const recordDashOffset = recordCircumference * (1 - recordProgress);
@@ -379,20 +354,12 @@ export function LoMotionStudio() {
             </label>
 
             <div className="flex items-center justify-between gap-4">
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={toggleCamera}
-                  className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]"
-                >
-                  {facingMode === "environment" ? "Rear" : "Front"}
-                </button>
-                <button
-                  onClick={() => setGhostMode((prev) => prev === "off" ? "low" : prev === "low" ? "high" : "off")}
-                  className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em]"
-                >
-                  {ghostLabel}
-                </button>
-              </div>
+              <button
+                onClick={toggleCamera}
+                className="rounded-full border border-[#96b56f] bg-[#171916] px-4 py-3 font-mono text-xs uppercase tracking-[0.16em]"
+              >
+                {facingMode === "environment" ? "Rear" : "Front"}
+              </button>
 
               <button
                 onPointerDown={(e) => {
