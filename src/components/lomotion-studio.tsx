@@ -112,7 +112,7 @@ export function LoMotionStudio() {
     displayCanvas.width = viewportWidth;
     displayCanvas.height = viewportHeight;
     dctx.imageSmoothingEnabled = false;
-    dctx.fillStyle = LCD_BLACK;
+    dctx.fillStyle = LCD_GREEN;
     dctx.fillRect(0, 0, displayCanvas.width, displayCanvas.height);
 
     const scaleX = viewportWidth / quantized.width;
@@ -127,7 +127,7 @@ export function LoMotionStudio() {
       for (let x = 0; x < quantized.width; x += 1) {
         const idx = y * quantized.width + x;
         if (!quantized.binary[idx]) continue;
-        dctx.fillStyle = LCD_GREEN;
+        dctx.fillStyle = LCD_BLACK;
         dctx.fillRect(offsetX + x * pixelScale, offsetY + y * pixelScale, pixelScale, pixelScale);
       }
     }
@@ -141,7 +141,7 @@ export function LoMotionStudio() {
           const idx = y * quantized.width + x;
           const prev = previousFrameRef.current[idx];
           const curr = quantized.binary[idx];
-          if (prev !== 0 || curr !== 1) continue;
+          if (prev !== 1 || curr !== 0) continue;
           dctx.fillRect(offsetX + x * pixelScale, offsetY + y * pixelScale, pixelScale, pixelScale);
         }
       }
