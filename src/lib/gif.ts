@@ -21,7 +21,7 @@ export async function encodeGif(frames: CapturedFrame[], fps: number) {
   gridOverlay.height = gifHeight;
   const gridCtx = gridOverlay.getContext("2d");
   if (!gridCtx) throw new Error("Grid canvas context unavailable");
-  drawPixelGrid(gridCtx, width, height, exportScale, 0.5);
+  drawPixelGrid(gridCtx, width, height, exportScale, 1);
 
   const gif = new GIF({
     workers: 2,
