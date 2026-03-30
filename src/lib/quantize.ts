@@ -4,17 +4,20 @@ export function getLuminance(r: number, g: number, b: number) {
   return 0.299 * r + 0.587 * g + 0.114 * b;
 }
 
-export function quantizeTo1Bit(imageData: ImageData, threshold: number) {
+export function quantizeTo1Bit(imageData: ImageData, threshold: number, previousLuma?: Float32Array | null, persistence = 0) {
   const { data, width, height } = imageData;
   const binary = new Uint8Array(width * height);
+  const luma = new Float32Array(width * height);
 
   for (let i = 0; i < width * height; i += 1) {
     const idx = i * 4;
-    const lum = getLuminance(data[idx], data[idx + 1], data[idx + 2]);
-    binary[i] = lum >= threshold ? 1 : 0;
+    const current = getLuminance(data[idx], data[idx + 1], data[idx + 2]);
+    const blended = previousLuma ? (current * (1 - persistence) + previousLuma[i] * persistence) : current;
+    luma[i] = blended;
+    binary[i] = blended >= threshold ? 1 : 0;
   }
 
-  return { binary, width, height };
+  return { binary, luma, width, height };
 }
 
 export function binaryToImageData(binary: Uint8Array, width: number, height: number) {
