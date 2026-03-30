@@ -398,8 +398,7 @@ export function LoMotionStudio() {
       ) : (
         <div className="absolute inset-x-0 bottom-0 z-30 px-4 pb-[max(env(safe-area-inset-bottom),1.5rem)] pt-16">
           <div className="mx-auto flex w-full max-w-md flex-col gap-4 rounded-[28px] border border-[#96b56f]/20 bg-[#171916]/70 p-4 backdrop-blur-sm">
-            <label className="flex flex-col gap-2 font-mono text-xs uppercase tracking-[0.18em] text-[#96b56f]">
-              Threshold
+            <label className="flex flex-col gap-2">
               <input
                 type="range"
                 min={0}
@@ -407,6 +406,7 @@ export function LoMotionStudio() {
                 value={threshold}
                 onChange={(e) => setThreshold(Number(e.target.value))}
                 className="accent-[#96b56f]"
+                aria-label="Threshold"
               />
             </label>
 
