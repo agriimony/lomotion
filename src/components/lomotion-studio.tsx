@@ -6,17 +6,10 @@ import { drawPixelGrid } from "@/lib/grid";
 import { encodeGif, type CapturedFrame } from "@/lib/gif";
 import { DEFAULT_THRESHOLD, LCD_BLACK, LCD_GREEN, MAX_RECORD_MS, RECORD_FPS, TARGET_WIDTH } from "@/lib/palette";
 import { quantizeFrame } from "@/lib/quantize";
+import { LOGO_BITMAP, LOGO_OFFSET_X, LOGO_OFFSET_Y } from "@/lib/logo-mask";
 
 type Mode = "live" | "recording" | "processing" | "review";
 type AspectMode = "full" | "square" | "classic";
-
-const LOGO_BITMAP = [
-  "1000000000000000",
-  "1000110110110110",
-  "1001001001001001",
-  "1001001001001001",
-  "1110110100010110",
-] as const;
 
 export function LoMotionStudio() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -139,15 +132,13 @@ export function LoMotionStudio() {
       }
     }
 
-    const logoOffsetX = 5;
-    const logoOffsetY = 5;
     dctx.save();
     for (let y = 0; y < LOGO_BITMAP.length; y += 1) {
       const row = LOGO_BITMAP[y];
       for (let x = 0; x < row.length; x += 1) {
         if (row[x] !== "1") continue;
-        const px = logoOffsetX + x;
-        const py = logoOffsetY + y;
+        const px = LOGO_OFFSET_X + x;
+        const py = LOGO_OFFSET_Y + y;
         if (px < 0 || py < 0 || px >= quantized.width || py >= quantized.height) continue;
         const drawX = offsetX + px * pixelScale;
         const drawY = offsetY + py * pixelScale;

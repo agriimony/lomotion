@@ -1,6 +1,7 @@
 import GIF from "gif.js.optimized";
 import { LCD_BLACK, LCD_GREEN } from "@/lib/palette";
 import { drawPixelGrid } from "@/lib/grid";
+import { LOGO_BITMAP, LOGO_OFFSET_X, LOGO_OFFSET_Y } from "@/lib/logo-mask";
 
 export type CapturedFrame = {
   binary: Uint8Array;
@@ -48,6 +49,20 @@ export async function encodeGif(frames: CapturedFrame[], fps: number) {
         const idx = y * width + x;
         if (!frame.binary[idx]) continue;
         ctx.fillRect(x * exportScale, y * exportScale, exportScale, exportScale);
+      }
+    }
+
+
+    for (let y = 0; y < LOGO_BITMAP.length; y += 1) {
+      const row = LOGO_BITMAP[y];
+      for (let x = 0; x < row.length; x += 1) {
+        if (row[x] !== "1") continue;
+        const px = LOGO_OFFSET_X + x;
+        const py = LOGO_OFFSET_Y + y;
+        if (px < 0 || py < 0 || px >= width || py >= height) continue;
+        const idx = py * width + px;
+        ctx.fillStyle = frame.binary[idx] ? LCD_GREEN : LCD_BLACK;
+        ctx.fillRect(px * exportScale, py * exportScale, exportScale, exportScale);
       }
     }
 

@@ -1,0 +1,10 @@
+export const LOGO_BITMAP = [
+  "1000000000000000",
+  "1000110110110110",
+  "1001001001001001",
+  "1001001001001001",
+  "1110110100010110",
+] as const;
+
+export const LOGO_OFFSET_X = 5;
+export const LOGO_OFFSET_Y = 5;
