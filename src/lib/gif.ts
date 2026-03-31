@@ -1,4 +1,4 @@
-import GIF from "gif.js.optimized";
+import { GIFEncoder, quantize, applyPalette } from "gifenc";
 import { LCD_BLACK, LCD_GREEN } from "@/lib/palette";
 import { drawPixelGrid } from "@/lib/grid";
 import { LOGO_BITMAP, LOGO_OFFSET_X, LOGO_OFFSET_Y } from "@/lib/logo-mask";
@@ -12,7 +12,7 @@ export type CapturedFrame = {
 export async function encodeGif(
   frames: CapturedFrame[],
   fps: number,
-  onFramePrepared?: (current: number, total: number, phase?: string) => void,
+  onProgress?: (current: number, total: number, phase?: string) => void,
 ) {
   if (!frames.length) throw new Error("No frames to encode");
 
@@ -20,6 +20,13 @@ export async function encodeGif(
   const exportScale = 6;
   const gifWidth = width * exportScale;
   const gifHeight = height * exportScale;
+
+  const paletteHex = [LCD_GREEN, LCD_BLACK];
+  const paletteRgb = new Uint8Array([
+    0x96, 0xb5, 0x6f,
+    0x17, 0x19, 0x16,
+  ]);
+
   const gridOverlay = document.createElement("canvas");
   gridOverlay.width = gifWidth;
   gridOverlay.height = gifHeight;
@@ -27,22 +34,16 @@ export async function encodeGif(
   if (!gridCtx) throw new Error("Grid canvas context unavailable");
   drawPixelGrid(gridCtx, width, height, exportScale, 1);
 
-  const gif = new GIF({
-    workers: 2,
-    quality: 1,
-    width: gifWidth,
-    height: gifHeight,
-    workerScript: "/gif.worker.js",
-    repeat: 0,
-  });
+  const encoder = GIFEncoder({ auto: false });
+  const delay = Math.round(1000 / fps);
 
   for (let frameIndex = 0; frameIndex < frames.length; frameIndex += 1) {
+    onProgress?.(frameIndex + 1, frames.length, "encoding");
     const frame = frames[frameIndex];
-    onFramePrepared?.(frameIndex + 1, frames.length, "painting");
     const canvas = document.createElement("canvas");
     canvas.width = gifWidth;
     canvas.height = gifHeight;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) throw new Error("Canvas context unavailable");
 
     ctx.fillStyle = LCD_GREEN;
@@ -56,7 +57,6 @@ export async function encodeGif(
         ctx.fillRect(x * exportScale, y * exportScale, exportScale, exportScale);
       }
     }
-
 
     for (let y = 0; y < LOGO_BITMAP.length; y += 1) {
       const row = LOGO_BITMAP[y];
@@ -72,17 +72,18 @@ export async function encodeGif(
     }
 
     ctx.drawImage(gridOverlay, 0, 0);
-    gif.addFrame(canvas, { delay: Math.round(1000 / fps) });
-    onFramePrepared?.(frameIndex + 1, frames.length, "queued");
+
+    const imageData = ctx.getImageData(0, 0, gifWidth, gifHeight);
+    const indexed = applyPalette(imageData.data, paletteRgb, "rgb444");
+    encoder.writeFrame(indexed, gifWidth, gifHeight, { palette: paletteRgb, delay });
+
     if ((frameIndex + 1) % 2 === 0) {
       await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
     }
   }
 
-  onFramePrepared?.(frames.length, frames.length, "encoding");
-  return new Promise<Blob>((resolve, reject) => {
-    gif.on("finished", (blob: Blob) => resolve(blob));
-    gif.on("abort", () => reject(new Error("GIF encoding aborted")));
-    gif.render();
-  });
+  onProgress?.(frames.length, frames.length, "finalizing");
+  encoder.finish();
+  const bytes = encoder.bytesView();
+  return new Blob([bytes], { type: "image/gif" });
 }
