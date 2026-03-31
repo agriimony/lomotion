@@ -1,5 +1,8 @@
 declare module "gifenc" {
-  export type GIFPalette = number[][] | Uint8Array;
+  export type RGB = [number, number, number];
+  export type RGBA = [number, number, number, number];
+  export type GIFPalette = RGB[] | RGBA[] | Uint8Array<ArrayBuffer>;
+  export type GIFBytes = Uint8Array<ArrayBuffer>;
 
   export type GIFEncoderOptions = {
     auto?: boolean;
@@ -19,8 +22,8 @@ declare module "gifenc" {
   export type GIFEncoderInstance = {
     writeFrame(index: Uint8Array, width: number, height: number, opts?: WriteFrameOptions): void;
     finish(): void;
-    bytes(): Uint8Array;
-    bytesView(): Uint8Array;
+    bytes(): GIFBytes;
+    bytesView(): GIFBytes;
     writeHeader(): void;
     reset(): void;
     buffer: ArrayBuffer;
@@ -41,10 +44,10 @@ declare module "gifenc" {
       clearAlphaThreshold?: number;
       clearAlphaColor?: number;
     },
-  ): number[][];
+  ): GIFPalette;
   export function applyPalette(
     rgba: Uint8Array | Uint8ClampedArray,
     palette: GIFPalette,
     format?: "rgb565" | "rgb444" | "rgba4444",
-  ): Uint8Array;
+  ): GIFBytes;
 }
