@@ -11,6 +11,7 @@ import { triggerHaptic } from "@/lib/haptics";
 
 type Mode = "live" | "recording" | "processing" | "review";
 type AspectMode = "full" | "square" | "classic";
+type PlaybackMode = "loop" | "boomerang";
 
 function FlipCameraIcon() {
   return (
@@ -21,6 +22,24 @@ function FlipCameraIcon() {
       <path d="M14.8 9.8l.9.3-.3.9" />
       <path d="M16 13c-.8 1.2-2.2 2-4 2-1.2 0-2.3-.4-3.1-1.1" />
       <path d="M9.2 14.2l-.9-.3.3-.9" />
+    </svg>
+  );
+}
+
+function PlaybackModeIcon({ mode }: { mode: PlaybackMode }) {
+  if (mode === "boomerang") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+        <path d="M16.5 6.5H10a4.5 4.5 0 0 0 0 9h7" />
+        <path d="m14 13 3 2.5 3-2.5" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+      <path d="M5 12h12" />
+      <path d="m13 8 4 4-4 4" />
     </svg>
   );
 }
@@ -105,6 +124,7 @@ export function LoMotionStudio() {
   const [error, setError] = useState("");
   const [recordMs, setRecordMs] = useState(0);
   const [aspectMode, setAspectMode] = useState<AspectMode>("full");
+  const [playbackMode, setPlaybackMode] = useState<PlaybackMode>("loop");
   const [previewSize, setPreviewSize] = useState({ width: TARGET_WIDTH, height: 84 });
   const [renderElapsedMs, setRenderElapsedMs] = useState(0);
   const [renderFrameProgress, setRenderFrameProgress] = useState({ current: 0, total: 0, phase: "idle" });
@@ -356,9 +376,14 @@ export function LoMotionStudio() {
       if (!framesRef.current.length) {
         renderProcessedFrame(true, performance.now());
       }
-      const blob = await encodeGif(framesRef.current, RECORD_FPS, (current, total, phase) => {
-        setRenderFrameProgress({ current, total, phase: phase || "working" });
-      });
+      const blob = await encodeGif(
+        framesRef.current,
+        RECORD_FPS,
+        playbackMode === "boomerang",
+        (current, total, phase) => {
+          setRenderFrameProgress({ current, total, phase: phase || "working" });
+        },
+      );
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
@@ -461,6 +486,11 @@ export function LoMotionStudio() {
     });
   }, []);
 
+  const togglePlaybackMode = useCallback(() => {
+    triggerHaptic("light");
+    setPlaybackMode((prev) => (prev === "loop" ? "boomerang" : "loop"));
+  }, []);
+
   const aspectLabel = aspectMode === "full" ? "Full" : aspectMode === "square" ? "1:1" : "Classic";
   const aspectIcon = aspectMode === "full" ? "▭" : aspectMode === "square" ? "□" : "▦";
   const recordProgress = Math.max(0, Math.min(1, recordMs / MAX_RECORD_MS));
@@ -541,6 +571,15 @@ export function LoMotionStudio() {
                 title={facingMode === "environment" ? "Rear camera" : "Front camera"}
               >
                 <FlipCameraIcon />
+              </button>
+
+              <button
+                onClick={togglePlaybackMode}
+                className="absolute left-14 grid h-12 w-12 place-items-center rounded-full border border-[#96b56f] bg-[#171916] text-[#96b56f]"
+                aria-label={playbackMode === "boomerang" ? "Boomerang playback" : "Loop playback"}
+                title={playbackMode === "boomerang" ? "Boomerang" : "Loop"}
+              >
+                <PlaybackModeIcon mode={playbackMode} />
               </button>
 
               <button

@@ -12,11 +12,12 @@ export type CapturedFrame = {
 export async function encodeGif(
   frames: CapturedFrame[],
   fps: number,
+  boomerang = false,
   onProgress?: (current: number, total: number, phase?: string) => void,
 ) {
   if (!frames.length) throw new Error("No frames to encode");
 
-  const sequence = frames.length > 1
+  const sequence = boomerang && frames.length > 1
     ? [...frames, ...frames.slice(1, -1).reverse()]
     : frames;
 
