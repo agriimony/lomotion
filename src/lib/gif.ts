@@ -9,7 +9,11 @@ export type CapturedFrame = {
   height: number;
 };
 
-export async function encodeGif(frames: CapturedFrame[], fps: number, onFramePrepared?: (current: number, total: number) => void) {
+export async function encodeGif(
+  frames: CapturedFrame[],
+  fps: number,
+  onFramePrepared?: (current: number, total: number, phase?: string) => void,
+) {
   if (!frames.length) throw new Error("No frames to encode");
 
   const { width, height } = frames[0];
@@ -34,7 +38,7 @@ export async function encodeGif(frames: CapturedFrame[], fps: number, onFramePre
 
   for (let frameIndex = 0; frameIndex < frames.length; frameIndex += 1) {
     const frame = frames[frameIndex];
-    onFramePrepared?.(frameIndex + 1, frames.length);
+    onFramePrepared?.(frameIndex + 1, frames.length, "painting");
     const canvas = document.createElement("canvas");
     canvas.width = gifWidth;
     canvas.height = gifHeight;
@@ -69,8 +73,13 @@ export async function encodeGif(frames: CapturedFrame[], fps: number, onFramePre
 
     ctx.drawImage(gridOverlay, 0, 0);
     gif.addFrame(canvas, { delay: Math.round(1000 / fps) });
+    onFramePrepared?.(frameIndex + 1, frames.length, "queued");
+    if ((frameIndex + 1) % 2 === 0) {
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+    }
   }
 
+  onFramePrepared?.(frames.length, frames.length, "encoding");
   return new Promise<Blob>((resolve, reject) => {
     gif.on("finished", (blob: Blob) => resolve(blob));
     gif.on("abort", () => reject(new Error("GIF encoding aborted")));
