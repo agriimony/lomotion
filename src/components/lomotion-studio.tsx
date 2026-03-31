@@ -47,6 +47,38 @@ function AspectIcon({ mode }: { mode: AspectMode }) {
   );
 }
 
+function SaveIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+      <path d="M12 4v10" />
+      <path d="m8.5 10.5 3.5 3.5 3.5-3.5" />
+      <path d="M5 17.5h14" />
+      <rect x="4" y="3.5" width="16" height="17" rx="3" />
+    </svg>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+      <circle cx="18" cy="5.5" r="2.5" />
+      <circle cx="6" cy="12" r="2.5" />
+      <circle cx="18" cy="18.5" r="2.5" />
+      <path d="M8.3 10.8 15.7 6.7" />
+      <path d="M8.3 13.2 15.7 17.3" />
+    </svg>
+  );
+}
+
+function RetakeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+      <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3" />
+      <path d="M4.5 7.5V12H9" />
+    </svg>
+  );
+}
+
 export function LoMotionStudio() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const displayCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -457,10 +489,31 @@ export function LoMotionStudio() {
       </div>
 
       {mode === "review" ? (
-        <div className="absolute inset-x-0 bottom-0 z-30 flex items-center justify-center gap-3 bg-gradient-to-t from-[#171916] via-[#171916]/90 to-transparent px-4 pb-8 pt-16">
-          <button onClick={saveGif} className="rounded-full border border-[#96b56f] bg-[#171916] px-5 py-3 font-mono text-sm uppercase tracking-wide">Save</button>
-          <button onClick={shareGif} className="rounded-full border border-[#96b56f] bg-[#96b56f] px-5 py-3 font-mono text-sm uppercase tracking-wide text-[#171916]">Share</button>
-          <button onClick={retake} className="rounded-full border border-[#96b56f] bg-[#171916] px-5 py-3 font-mono text-sm uppercase tracking-wide">Retake</button>
+        <div className="absolute inset-x-0 bottom-0 z-30 flex items-center justify-center gap-4 bg-gradient-to-t from-[#171916] via-[#171916]/90 to-transparent px-4 pb-8 pt-16">
+          <button
+            onClick={saveGif}
+            className="grid h-16 w-16 place-items-center rounded-full border border-[#96b56f] bg-[#171916] text-[#96b56f] shadow-[0_0_0_1px_rgba(150,181,111,0.1)] transition active:scale-95"
+            aria-label="Save GIF"
+            title="Save"
+          >
+            <SaveIcon />
+          </button>
+          <button
+            onClick={shareGif}
+            className="grid h-16 w-16 place-items-center rounded-full border border-[#96b56f] bg-[#96b56f] text-[#171916] shadow-[0_0_0_1px_rgba(150,181,111,0.15)] transition active:scale-95"
+            aria-label="Share GIF"
+            title="Share"
+          >
+            <ShareIcon />
+          </button>
+          <button
+            onClick={retake}
+            className="grid h-16 w-16 place-items-center rounded-full border border-[#96b56f] bg-[#171916] text-[#96b56f] shadow-[0_0_0_1px_rgba(150,181,111,0.1)] transition active:scale-95"
+            aria-label="Retake"
+            title="Retake"
+          >
+            <RetakeIcon />
+          </button>
         </div>
       ) : (
         <div className="absolute inset-x-0 bottom-0 z-30 px-4 pb-[max(env(safe-area-inset-bottom),1.5rem)] pt-16">
