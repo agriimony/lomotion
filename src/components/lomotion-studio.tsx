@@ -109,6 +109,7 @@ export function LoMotionStudio() {
   const isPressingRef = useRef(false);
   const modeRef = useRef<Mode>("live");
   const thresholdRef = useRef(DEFAULT_THRESHOLD);
+  const playbackModeRef = useRef<PlaybackMode>("loop");
   const recordStartRef = useRef<number>(0);
   const lastCaptureAtRef = useRef<number>(0);
   const lastSecondHapticRef = useRef<number>(0);
@@ -136,6 +137,10 @@ export function LoMotionStudio() {
   useEffect(() => {
     thresholdRef.current = threshold;
   }, [threshold]);
+
+  useEffect(() => {
+    playbackModeRef.current = playbackMode;
+  }, [playbackMode]);
 
   const displayScale = useMemo(() => {
     if (typeof window === "undefined") return 4;
@@ -376,12 +381,17 @@ export function LoMotionStudio() {
       if (!framesRef.current.length) {
         renderProcessedFrame(true, performance.now());
       }
+      const isBoomerang = playbackModeRef.current === "boomerang";
       const blob = await encodeGif(
         framesRef.current,
         RECORD_FPS,
-        playbackMode === "boomerang",
+        isBoomerang,
         (current, total, phase) => {
-          setRenderFrameProgress({ current, total, phase: phase || "working" });
+          setRenderFrameProgress({
+            current,
+            total,
+            phase: `${isBoomerang ? "boomerang" : "loop"} ${phase || "working"}`,
+          });
         },
       );
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
