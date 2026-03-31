@@ -62,6 +62,7 @@ export function LoMotionStudio() {
   const lastSecondHapticRef = useRef<number>(0);
   const objectUrlRef = useRef<string | null>(null);
   const renderStartRef = useRef<number>(0);
+  const cameraStartPromiseRef = useRef<Promise<void> | null>(null);
 
   const [mode, setMode] = useState<Mode>("live");
   const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD);
@@ -231,21 +232,35 @@ export function LoMotionStudio() {
   }, [renderProcessedFrame]);
 
   const startCamera = useCallback(async () => {
-    setError("");
-    stopStream();
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia(getCameraConstraints(facingMode));
-      streamRef.current = stream;
-      const video = videoRef.current;
-      if (!video) return;
-      video.srcObject = stream;
-      await video.play();
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      rafRef.current = window.requestAnimationFrame(loop);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Camera unavailable");
+    if (cameraStartPromiseRef.current) {
+      return cameraStartPromiseRef.current;
     }
-  }, [facingMode, stopStream]);
+
+    const startPromise = (async () => {
+      setError("");
+      stopStream();
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(getCameraConstraints(facingMode));
+        streamRef.current = stream;
+        const video = videoRef.current;
+        if (!video) return;
+        video.srcObject = stream;
+        await video.play();
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        rafRef.current = window.requestAnimationFrame(loop);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Camera unavailable";
+        if (!message.includes("interrupted by a new load request")) {
+          setError(message);
+        }
+      } finally {
+        cameraStartPromiseRef.current = null;
+      }
+    })();
+
+    cameraStartPromiseRef.current = startPromise;
+    return startPromise;
+  }, [facingMode, loop, stopStream]);
 
   useEffect(() => {
     void startCamera();
