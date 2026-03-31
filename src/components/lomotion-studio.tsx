@@ -257,6 +257,24 @@ export function LoMotionStudio() {
   }, [startCamera, stopStream]);
 
   useEffect(() => {
+    const resumePreview = () => {
+      if (document.visibilityState !== "visible") return;
+      if (modeRef.current !== "live" && modeRef.current !== "recording") return;
+      void startCamera();
+    };
+
+    document.addEventListener("visibilitychange", resumePreview);
+    window.addEventListener("focus", resumePreview);
+    window.addEventListener("pageshow", resumePreview);
+
+    return () => {
+      document.removeEventListener("visibilitychange", resumePreview);
+      window.removeEventListener("focus", resumePreview);
+      window.removeEventListener("pageshow", resumePreview);
+    };
+  }, [startCamera]);
+
+  useEffect(() => {
     if (!streamRef.current) return;
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = window.requestAnimationFrame(loop);
