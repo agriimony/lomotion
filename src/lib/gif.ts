@@ -16,6 +16,10 @@ export async function encodeGif(
 ) {
   if (!frames.length) throw new Error("No frames to encode");
 
+  const sequence = frames.length > 1
+    ? [...frames, ...frames.slice(1, -1).reverse()]
+    : frames;
+
   const { width, height } = frames[0];
   const exportScale = 6;
   const gifWidth = width * exportScale;
@@ -36,9 +40,9 @@ export async function encodeGif(
   const encoder = GIFEncoder();
   const delay = Math.round(1000 / fps);
 
-  for (let frameIndex = 0; frameIndex < frames.length; frameIndex += 1) {
-    onProgress?.(frameIndex + 1, frames.length, "encoding");
-    const frame = frames[frameIndex];
+  for (let frameIndex = 0; frameIndex < sequence.length; frameIndex += 1) {
+    onProgress?.(frameIndex + 1, sequence.length, "encoding");
+    const frame = sequence[frameIndex];
     const canvas = document.createElement("canvas");
     canvas.width = gifWidth;
     canvas.height = gifHeight;
@@ -81,7 +85,7 @@ export async function encodeGif(
     }
   }
 
-  onProgress?.(frames.length, frames.length, "finalizing");
+  onProgress?.(sequence.length, sequence.length, "finalizing");
   encoder.finish();
   const bytes = encoder.bytesView();
   const output = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
