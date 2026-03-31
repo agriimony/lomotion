@@ -491,7 +491,7 @@ export function LoMotionStudio() {
       </div>
 
       {mode === "review" ? (
-        <div className="absolute inset-x-0 bottom-0 z-30 flex items-center justify-center gap-4 bg-gradient-to-t from-[#171916] via-[#171916]/90 to-transparent px-4 pb-8 pt-16">
+        <div className="absolute inset-x-0 bottom-0 z-30 flex items-end justify-center gap-4 bg-gradient-to-t from-[#171916] via-[#171916]/90 to-transparent px-4 pb-8 pt-16">
           <button
             onClick={saveGif}
             className="grid h-16 w-16 place-items-center rounded-full border border-[#96b56f] bg-[#171916] text-[#96b56f] shadow-[0_0_0_1px_rgba(150,181,111,0.1)] transition active:scale-95"
@@ -502,11 +502,13 @@ export function LoMotionStudio() {
           </button>
           <button
             onClick={shareGif}
-            className="grid h-16 w-16 place-items-center rounded-full border border-[#96b56f] bg-[#96b56f] text-[#171916] shadow-[0_0_0_1px_rgba(150,181,111,0.15)] transition active:scale-95"
+            className="grid h-[4.5rem] w-[4.5rem] place-items-center rounded-full border border-[#96b56f] bg-[#96b56f] text-[#171916] shadow-[0_0_0_1px_rgba(150,181,111,0.15)] transition active:scale-95"
             aria-label="Share GIF"
             title="Share"
           >
-            <ShareIcon />
+            <div className="scale-110">
+              <ShareIcon />
+            </div>
           </button>
           <button
             onClick={retake}
