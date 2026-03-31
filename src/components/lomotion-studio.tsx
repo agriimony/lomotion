@@ -30,8 +30,8 @@ function PlaybackModeIcon({ mode }: { mode: PlaybackMode }) {
   if (mode === "boomerang") {
     return (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-        <path d="M16.5 6.5H10a4.5 4.5 0 0 0 0 9h7" />
-        <path d="m14 13 3 2.5 3-2.5" />
+        <path d="M18 7v5a4 4 0 0 1-4 4H7" />
+        <path d="m10 13-3 3 3 3" />
       </svg>
     );
   }
