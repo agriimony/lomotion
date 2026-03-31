@@ -1,4 +1,4 @@
-import { GIFEncoder, quantize, applyPalette } from "gifenc";
+import { GIFEncoder, applyPalette } from "gifenc";
 import { LCD_BLACK, LCD_GREEN } from "@/lib/palette";
 import { drawPixelGrid } from "@/lib/grid";
 import { LOGO_BITMAP, LOGO_OFFSET_X, LOGO_OFFSET_Y } from "@/lib/logo-mask";
@@ -21,11 +21,10 @@ export async function encodeGif(
   const gifWidth = width * exportScale;
   const gifHeight = height * exportScale;
 
-  const paletteHex = [LCD_GREEN, LCD_BLACK];
-  const paletteRgb = new Uint8Array([
-    0x96, 0xb5, 0x6f,
-    0x17, 0x19, 0x16,
-  ]);
+  const palette: [number, number, number][] = [
+    [0x96, 0xb5, 0x6f],
+    [0x17, 0x19, 0x16],
+  ];
 
   const gridOverlay = document.createElement("canvas");
   gridOverlay.width = gifWidth;
@@ -74,8 +73,8 @@ export async function encodeGif(
     ctx.drawImage(gridOverlay, 0, 0);
 
     const imageData = ctx.getImageData(0, 0, gifWidth, gifHeight);
-    const indexed = applyPalette(imageData.data, paletteRgb, "rgb444");
-    encoder.writeFrame(indexed, gifWidth, gifHeight, { palette: paletteRgb, delay });
+    const indexed = applyPalette(imageData.data, palette, "rgb444");
+    encoder.writeFrame(indexed, gifWidth, gifHeight, { palette, delay });
 
     if ((frameIndex + 1) % 2 === 0) {
       await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
