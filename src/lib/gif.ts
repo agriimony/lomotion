@@ -33,7 +33,7 @@ export async function encodeGif(
   if (!gridCtx) throw new Error("Grid canvas context unavailable");
   drawPixelGrid(gridCtx, width, height, exportScale, 1);
 
-  const encoder = GIFEncoder({ auto: false });
+  const encoder = GIFEncoder();
   const delay = Math.round(1000 / fps);
 
   for (let frameIndex = 0; frameIndex < frames.length; frameIndex += 1) {
