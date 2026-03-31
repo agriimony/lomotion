@@ -73,6 +73,7 @@ export function LoMotionStudio() {
   const [aspectMode, setAspectMode] = useState<AspectMode>("full");
   const [previewSize, setPreviewSize] = useState({ width: TARGET_WIDTH, height: 84 });
   const [renderElapsedMs, setRenderElapsedMs] = useState(0);
+  const [renderFrameProgress, setRenderFrameProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
     modeRef.current = mode;
@@ -282,24 +283,29 @@ export function LoMotionStudio() {
     triggerHaptic("medium");
     renderStartRef.current = performance.now();
     setRenderElapsedMs(0);
+    setRenderFrameProgress({ current: 0, total: framesRef.current.length });
     setMode("processing");
     modeRef.current = "processing";
     try {
       if (!framesRef.current.length) {
         renderProcessedFrame(true, performance.now());
       }
-      const blob = await encodeGif(framesRef.current, RECORD_FPS);
+      const blob = await encodeGif(framesRef.current, RECORD_FPS, (current, total) => {
+        setRenderFrameProgress({ current, total });
+      });
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
       setGifBlob(blob);
       setGifUrl(url);
       setRenderElapsedMs(0);
+      setRenderFrameProgress({ current: 0, total: 0 });
       setMode("review");
       modeRef.current = "review";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to render GIF");
       setRenderElapsedMs(0);
+      setRenderFrameProgress({ current: 0, total: 0 });
       setMode("live");
       modeRef.current = "live";
       }
@@ -503,6 +509,7 @@ export function LoMotionStudio() {
       {mode === "processing" ? (
         <div className="absolute inset-0 z-40 grid place-items-center bg-[#171916]/90">
           <div className="font-mono text-sm uppercase tracking-[0.2em] text-[#96b56f]">{`Rendering GIF… ${(renderElapsedMs / 1000).toFixed(1)}s`}</div>
+          <div className="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-[#96b56f]/80">{renderFrameProgress.total ? `Preparing ${renderFrameProgress.current}/${renderFrameProgress.total} frames` : "Preparing frames"}</div>
         </div>
       ) : null}
 
