@@ -574,25 +574,23 @@ export function LoMotionStudio() {
             </label>
 
             <div className="relative flex items-center justify-center">
-              <div className="absolute left-0 flex w-[7.5rem] items-center justify-between">
-                <button
-                  onClick={toggleCamera}
-                  className="grid h-12 w-12 place-items-center rounded-full border border-[#96b56f] bg-[#171916] text-[#96b56f]"
-                  aria-label="Flip camera"
-                  title={facingMode === "environment" ? "Rear camera" : "Front camera"}
-                >
-                  <FlipCameraIcon />
-                </button>
+              <button
+                onClick={toggleCamera}
+                className="absolute left-0 grid h-12 w-12 place-items-center rounded-full border border-[#96b56f] bg-[#171916] text-[#96b56f]"
+                aria-label="Flip camera"
+                title={facingMode === "environment" ? "Rear camera" : "Front camera"}
+              >
+                <FlipCameraIcon />
+              </button>
 
-                <button
-                  onClick={togglePlaybackMode}
-                  className="grid h-12 w-12 place-items-center rounded-full border border-[#96b56f] bg-[#171916] text-[#96b56f]"
-                  aria-label={playbackMode === "boomerang" ? "Boomerang playback" : "Loop playback"}
-                  title={playbackMode === "boomerang" ? "Boomerang" : "Loop"}
-                >
-                  <PlaybackModeIcon mode={playbackMode} />
-                </button>
-              </div>
+              <button
+                onClick={togglePlaybackMode}
+                className="absolute left-[3.75rem] grid h-12 w-12 place-items-center rounded-full border border-[#96b56f] bg-[#171916] text-[#96b56f]"
+                aria-label={playbackMode === "boomerang" ? "Boomerang playback" : "Loop playback"}
+                title={playbackMode === "boomerang" ? "Boomerang" : "Loop"}
+              >
+                <PlaybackModeIcon mode={playbackMode} />
+              </button>
 
               <button
                 onPointerDown={(e) => {
