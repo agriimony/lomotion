@@ -73,8 +73,10 @@ function ShareIcon() {
 function RetakeIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
-      <path d="M7.4 15.9A7 7 0 0 1 7.8 10a7 7 0 0 1 2.8-3.2" />
-      <path d="M8.9 6.8 10.8 6l.8 1.9" />
+      <path d="M8.2 8.3A7 7 0 1 1 6.2 13" />
+      <path d="M8.2 8.3H4.9" />
+      <path d="M8.2 8.3 6.1 6.2" />
+      <path d="M8.2 8.3 6.1 10.4" />
     </svg>
   );
 }
