@@ -85,5 +85,6 @@ export async function encodeGif(
   onProgress?.(frames.length, frames.length, "finalizing");
   encoder.finish();
   const bytes = encoder.bytesView();
-  return new Blob([bytes], { type: "image/gif" });
+  const output = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  return new Blob([output], { type: "image/gif" });
 }
