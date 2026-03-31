@@ -58,11 +58,14 @@ function SaveIcon() {
   );
 }
 
-function CopyIcon() {
+function ShareIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
-      <rect x="8" y="8" width="10" height="10" rx="2" />
-      <path d="M6 15.5h-.5A2.5 2.5 0 0 1 3 13V5.5A2.5 2.5 0 0 1 5.5 3H13a2.5 2.5 0 0 1 2.5 2.5V6" />
+      <circle cx="18" cy="5.5" r="2.5" />
+      <circle cx="6" cy="12" r="2.5" />
+      <circle cx="18" cy="18.5" r="2.5" />
+      <path d="M8.3 10.8 15.7 6.7" />
+      <path d="M8.3 13.2 15.7 17.3" />
     </svg>
   );
 }
@@ -429,26 +432,18 @@ export function LoMotionStudio() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }, [gifBlob]);
 
-  const copyGif = useCallback(async () => {
+  const shareGif = useCallback(async () => {
     if (!gifBlob) return;
+    const file = new File([gifBlob], "lomotion.gif", { type: "image/gif" });
     try {
-      if (
-        typeof window === "undefined"
-        || !("ClipboardItem" in window)
-        || !navigator.clipboard?.write
-      ) {
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: "LoMotion", text: "Made with LoMotion" });
+        triggerHaptic("success");
+      } else {
         saveGif();
-        return;
       }
-
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          [gifBlob.type || "image/gif"]: gifBlob,
-        }),
-      ]);
-      triggerHaptic("success");
     } catch {
-      saveGif();
+      // ignore cancelled share
     }
   }, [gifBlob, saveGif]);
 
@@ -505,13 +500,13 @@ export function LoMotionStudio() {
             <SaveIcon />
           </button>
           <button
-            onClick={copyGif}
+            onClick={shareGif}
             className="grid h-[4.5rem] w-[4.5rem] place-items-center rounded-full border border-[#96b56f] bg-[#96b56f] text-[#171916] shadow-[0_0_0_1px_rgba(150,181,111,0.15)] transition active:scale-95"
-            aria-label="Copy GIF"
-            title="Copy"
+            aria-label="Share GIF"
+            title="Share"
           >
             <div className="scale-110">
-              <CopyIcon />
+              <ShareIcon />
             </div>
           </button>
           <button
