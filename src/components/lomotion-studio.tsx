@@ -61,6 +61,7 @@ export function LoMotionStudio() {
   const lastCaptureAtRef = useRef<number>(0);
   const lastSecondHapticRef = useRef<number>(0);
   const objectUrlRef = useRef<string | null>(null);
+  const renderStartRef = useRef<number>(0);
 
   const [mode, setMode] = useState<Mode>("live");
   const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD);
@@ -71,6 +72,7 @@ export function LoMotionStudio() {
   const [recordMs, setRecordMs] = useState(0);
   const [aspectMode, setAspectMode] = useState<AspectMode>("full");
   const [previewSize, setPreviewSize] = useState({ width: TARGET_WIDTH, height: 84 });
+  const [renderElapsedMs, setRenderElapsedMs] = useState(0);
 
   useEffect(() => {
     modeRef.current = mode;
@@ -278,6 +280,8 @@ export function LoMotionStudio() {
   const stopRecording = useCallback(async () => {
     if (modeRef.current !== "recording") return;
     triggerHaptic("medium");
+    renderStartRef.current = performance.now();
+    setRenderElapsedMs(0);
     setMode("processing");
     modeRef.current = "processing";
     try {
@@ -290,10 +294,12 @@ export function LoMotionStudio() {
       objectUrlRef.current = url;
       setGifBlob(blob);
       setGifUrl(url);
+      setRenderElapsedMs(0);
       setMode("review");
       modeRef.current = "review";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to render GIF");
+      setRenderElapsedMs(0);
       setMode("live");
       modeRef.current = "live";
       }
@@ -322,6 +328,14 @@ export function LoMotionStudio() {
       window.removeEventListener("mouseup", endPress);
     };
   }, []);
+
+  useEffect(() => {
+    if (mode !== "processing") return;
+    const t = window.setInterval(() => {
+      setRenderElapsedMs(performance.now() - renderStartRef.current);
+    }, 100);
+    return () => window.clearInterval(t);
+  }, [mode]);
 
   const retake = useCallback(() => {
     if (objectUrlRef.current) {
@@ -488,7 +502,7 @@ export function LoMotionStudio() {
 
       {mode === "processing" ? (
         <div className="absolute inset-0 z-40 grid place-items-center bg-[#171916]/90">
-          <div className="font-mono text-sm uppercase tracking-[0.2em] text-[#96b56f]">Rendering GIF…</div>
+          <div className="font-mono text-sm uppercase tracking-[0.2em] text-[#96b56f]">{`Rendering GIF… ${(renderElapsedMs / 1000).toFixed(1)}s`}</div>
         </div>
       ) : null}
 
