@@ -1,0 +1,23 @@
+{
+  "accountAssociation": {
+    "header": "REPLACE_WITH_SIGNED_HEADER",
+    "payload": "REPLACE_WITH_SIGNED_PAYLOAD",
+    "signature": "REPLACE_WITH_SIGNED_SIGNATURE"
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "LoMotion",
+    "homeUrl": "https://lomotion.vercel.app/",
+    "iconUrl": "REPLACE_WITH_1024_ICON_URL",
+    "splashImageUrl": "REPLACE_WITH_200_SPLASH_URL",
+    "splashBackgroundColor": "#171916",
+    "subtitle": "low-fi motion graphics",
+    "description": "Capture low-fi motion graphics and export pixel GIF loops.",
+    "primaryCategory": "art-creativity",
+    "tags": ["gif", "camera", "pixel", "motion", "art"],
+    "tagline": "low-fi motion graphics",
+    "ogTitle": "LoMotion",
+    "ogDescription": "Capture low-fi motion graphics and export pixel GIF loops.",
+    "ogImageUrl": "https://lomotion.vercel.app/api/og"
+  }
+}
