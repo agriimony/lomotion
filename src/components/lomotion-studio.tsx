@@ -243,21 +243,19 @@ export function LoMotionStudio() {
     const raw = pctx.getImageData(0, 0, TARGET_WIDTH, targetHeight);
     const quantized = quantizeFrame(raw, thresholdRef.current);
 
-    const viewportWidth = viewportBounds.width || TARGET_WIDTH * displayScale;
-    const viewportHeight = viewportBounds.height || targetHeight * displayScale;
-    displayCanvas.width = viewportWidth;
-    displayCanvas.height = viewportHeight;
+    const containerWidth = viewportBounds.width || TARGET_WIDTH * displayScale;
+    const containerHeight = viewportBounds.height || targetHeight * displayScale;
+    const pixelScale = Math.min(containerWidth / TARGET_WIDTH, containerHeight / targetHeight);
+    const drawWidth = Math.max(1, Math.floor(TARGET_WIDTH * pixelScale));
+    const drawHeight = Math.max(1, Math.floor(targetHeight * pixelScale));
+    const offsetX = Math.floor((containerWidth - drawWidth) / 2);
+    const offsetY = Math.floor((containerHeight - drawHeight) / 2);
+
+    displayCanvas.width = Math.max(1, containerWidth);
+    displayCanvas.height = Math.max(1, containerHeight);
     dctx.imageSmoothingEnabled = false;
     dctx.fillStyle = "#000000";
     dctx.fillRect(0, 0, displayCanvas.width, displayCanvas.height);
-
-    const scaleX = viewportWidth / quantized.width;
-    const scaleY = viewportHeight / quantized.height;
-    const pixelScale = Math.min(scaleX, scaleY);
-    const drawWidth = quantized.width * pixelScale;
-    const drawHeight = quantized.height * pixelScale;
-    const offsetX = (viewportWidth - drawWidth) / 2;
-    const offsetY = (viewportHeight - drawHeight) / 2;
 
     dctx.fillStyle = LCD_GREEN;
     dctx.fillRect(offsetX, offsetY, drawWidth, drawHeight);
