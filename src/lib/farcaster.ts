@@ -49,10 +49,10 @@ export async function getFarcasterMiniAppState(): Promise<FarcasterMiniAppState>
 
   try {
     const { sdk } = await import("@farcaster/miniapp-sdk");
-    const context = (sdk?.context ?? null) as FarcasterMiniAppContext | null;
+    const context = await sdk.context as FarcasterMiniAppContext;
     return {
       isMiniApp: Boolean(context),
-      context,
+      context: context ?? null,
       sdk: sdk ?? null,
     };
   } catch {

@@ -532,30 +532,35 @@ export function LoMotionStudio() {
       }
     };
 
-    try {
-      if (miniAppSdk?.actions?.composeCast) {
+    if (miniAppSdk?.actions?.composeCast) {
+      try {
         const copied = await copyGifToClipboard();
         await miniAppSdk.actions.composeCast({
           text: copied
-            ? "Made with LoMotion. GIF copied to clipboard — paste it into this cast."
-            : "Made with LoMotion.",
+            ? "Made with LoMotion. GIF copied to clipboard. Paste it into this cast."
+            : "Made with LoMotion. GIF saved locally — attach it to this cast.",
           embeds: [window.location.href],
         });
         triggerHaptic("success");
         if (!copied) saveGif();
-        return;
+      } catch {
+        // ignore cancelled composer
       }
+      return;
+    }
 
+    try {
       const file = new File([gifBlob], "lomotion.gif", { type: "image/gif" });
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: "LoMotion", text: "Made with LoMotion" });
         triggerHaptic("success");
-      } else {
-        saveGif();
+        return;
       }
     } catch {
-      // ignore cancelled share
+      // ignore cancelled share and fall back to save
     }
+
+    saveGif();
   }, [gifBlob, miniAppSdk, saveGif]);
 
   const toggleCamera = useCallback(() => {
