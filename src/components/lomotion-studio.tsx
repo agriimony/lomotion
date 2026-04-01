@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { getCameraConstraints } from "@/lib/camera";
 import { drawPixelGrid } from "@/lib/grid";
 import { encodeGif, type CapturedFrame } from "@/lib/gif";
@@ -177,28 +177,34 @@ export function LoMotionStudio() {
     }
   }, []);
 
+  const updateViewportBounds = useCallback(() => {
+    const element = viewportRef.current;
+    if (!element) return;
+    const rect = element.getBoundingClientRect();
+    setViewportBounds({
+      width: Math.max(1, Math.round(rect.width)),
+      height: Math.max(1, Math.round(rect.height)),
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    updateViewportBounds();
+  }, [updateViewportBounds]);
+
   useEffect(() => {
     const element = viewportRef.current;
     if (!element || typeof ResizeObserver === "undefined") return;
 
-    const updateBounds = () => {
-      const rect = element.getBoundingClientRect();
-      setViewportBounds({
-        width: Math.max(1, Math.round(rect.width)),
-        height: Math.max(1, Math.round(rect.height)),
-      });
-    };
-
-    updateBounds();
-    const observer = new ResizeObserver(updateBounds);
+    updateViewportBounds();
+    const observer = new ResizeObserver(updateViewportBounds);
     observer.observe(element);
-    window.addEventListener("resize", updateBounds);
+    window.addEventListener("resize", updateViewportBounds);
 
     return () => {
       observer.disconnect();
-      window.removeEventListener("resize", updateBounds);
+      window.removeEventListener("resize", updateViewportBounds);
     };
-  }, []);
+  }, [updateViewportBounds]);
 
   const renderProcessedFrame = useCallback((capture = false, now = performance.now()) => {
     const video = videoRef.current;
