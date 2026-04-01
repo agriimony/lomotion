@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getCameraConstraints } from "@/lib/camera";
 import { drawPixelGrid } from "@/lib/grid";
 import { encodeGif, type CapturedFrame } from "@/lib/gif";
@@ -134,7 +134,6 @@ export function LoMotionStudio() {
   const [miniAppContext, setMiniAppContext] = useState<FarcasterMiniAppContext | null>(null);
   const [miniAppSdk, setMiniAppSdk] = useState<Awaited<ReturnType<typeof getFarcasterMiniAppState>>["sdk"]>(null);
   const [viewportBounds, setViewportBounds] = useState({ width: 0, height: 0 });
-  const [displayFrame, setDisplayFrame] = useState({ width: 0, height: 0, x: 0, y: 0 });
 
   useEffect(() => {
     modeRef.current = mode;
@@ -177,45 +176,40 @@ export function LoMotionStudio() {
     }
   }, []);
 
-  const updateViewportBounds = useCallback(() => {
-    const element = viewportRef.current;
-    if (!element) return;
-    const rect = element.getBoundingClientRect();
-    setViewportBounds({
-      width: Math.max(1, Math.round(rect.width)),
-      height: Math.max(1, Math.round(rect.height)),
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    updateViewportBounds();
-  }, [updateViewportBounds]);
-
   useEffect(() => {
     const element = viewportRef.current;
     if (!element || typeof ResizeObserver === "undefined") return;
 
-    updateViewportBounds();
-    const observer = new ResizeObserver(updateViewportBounds);
+    const updateBounds = () => {
+      const rect = element.getBoundingClientRect();
+      setViewportBounds({
+        width: Math.max(1, Math.round(rect.width)),
+        height: Math.max(1, Math.round(rect.height)),
+      });
+    };
+
+    updateBounds();
+    const observer = new ResizeObserver(updateBounds);
     observer.observe(element);
-    window.addEventListener("resize", updateViewportBounds);
+    window.addEventListener("resize", updateBounds);
 
     return () => {
       observer.disconnect();
-      window.removeEventListener("resize", updateViewportBounds);
+      window.removeEventListener("resize", updateBounds);
     };
-  }, [updateViewportBounds]);
+  }, []);
 
   const renderProcessedFrame = useCallback((capture = false, now = performance.now()) => {
     const video = videoRef.current;
     const displayCanvas = displayCanvasRef.current;
     const processCanvas = processCanvasRef.current;
-    if (!video || !displayCanvas || !processCanvas) return false;
-    if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) return false;
+    if (!video || !displayCanvas || !processCanvas) return;
+    if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
 
     const sourceAspect = video.videoHeight / video.videoWidth;
-    if (aspectMode === "full" && (!viewportBounds.width || !viewportBounds.height)) return false;
-    const containerAspect = viewportBounds.height / viewportBounds.width;
+    const containerAspect = viewportBounds.width > 0 && viewportBounds.height > 0
+      ? viewportBounds.height / viewportBounds.width
+      : sourceAspect;
     const targetHeight = (() => {
       if (aspectMode === "classic") return 48;
       if (aspectMode === "square") return TARGET_WIDTH;
@@ -229,7 +223,7 @@ export function LoMotionStudio() {
 
     const pctx = processCanvas.getContext("2d", { willReadFrequently: true });
     const dctx = displayCanvas.getContext("2d");
-    if (!pctx || !dctx) return false;
+    if (!pctx || !dctx) return;
 
     const targetAspect = targetHeight / TARGET_WIDTH;
     const videoAspect = video.videoHeight / video.videoWidth;
@@ -260,22 +254,21 @@ export function LoMotionStudio() {
     const offsetX = Math.floor((containerWidth - drawWidth) / 2);
     const offsetY = Math.floor((containerHeight - drawHeight) / 2);
 
-    displayCanvas.width = Math.max(1, drawWidth);
-    displayCanvas.height = Math.max(1, drawHeight);
-    setDisplayFrame({ width: drawWidth, height: drawHeight, x: offsetX, y: offsetY });
+    displayCanvas.width = Math.max(1, containerWidth);
+    displayCanvas.height = Math.max(1, containerHeight);
     dctx.imageSmoothingEnabled = false;
     dctx.fillStyle = "#000000";
     dctx.fillRect(0, 0, displayCanvas.width, displayCanvas.height);
 
     dctx.fillStyle = LCD_GREEN;
-    dctx.fillRect(0, 0, drawWidth, drawHeight);
+    dctx.fillRect(offsetX, offsetY, drawWidth, drawHeight);
 
     for (let y = 0; y < quantized.height; y += 1) {
       for (let x = 0; x < quantized.width; x += 1) {
         const idx = y * quantized.width + x;
         if (!quantized.binary[idx]) continue;
         dctx.fillStyle = LCD_BLACK;
-        dctx.fillRect(x * pixelScale, y * pixelScale, pixelScale, pixelScale);
+        dctx.fillRect(offsetX + x * pixelScale, offsetY + y * pixelScale, pixelScale, pixelScale);
       }
     }
 
@@ -287,8 +280,8 @@ export function LoMotionStudio() {
         const px = LOGO_OFFSET_X + x;
         const py = LOGO_OFFSET_Y + y;
         if (px < 0 || py < 0 || px >= quantized.width || py >= quantized.height) continue;
-        const drawX = px * pixelScale;
-        const drawY = py * pixelScale;
+        const drawX = offsetX + px * pixelScale;
+        const drawY = offsetY + py * pixelScale;
         const idx = py * quantized.width + px;
         dctx.fillStyle = quantized.binary[idx] ? LCD_GREEN : LCD_BLACK;
         dctx.fillRect(drawX, drawY, pixelScale, pixelScale);
@@ -297,6 +290,7 @@ export function LoMotionStudio() {
     dctx.restore();
 
     dctx.save();
+    dctx.translate(offsetX, offsetY);
     drawPixelGrid(dctx, quantized.width, quantized.height, pixelScale);
     dctx.restore();
 
@@ -311,8 +305,6 @@ export function LoMotionStudio() {
         lastCaptureAtRef.current = now;
       }
     }
-
-    return true;
   }, [aspectMode, displayScale, viewportBounds.height, viewportBounds.width]);
 
   const stopRecordingRef = useRef<() => Promise<void>>(async () => {});
@@ -398,25 +390,12 @@ export function LoMotionStudio() {
 
   useEffect(() => {
     if (!streamRef.current) return;
-
-    const video = videoRef.current;
-    const kick = () => {
-      renderProcessedFrame(false, performance.now());
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      rafRef.current = window.requestAnimationFrame(loop);
-    };
-
-    if (video && video.readyState >= 2 && viewportBounds.width && viewportBounds.height) {
-      kick();
-    } else if (video) {
-      video.addEventListener("loadeddata", kick, { once: true });
-    }
-
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = window.requestAnimationFrame(loop);
     return () => {
-      if (video) video.removeEventListener("loadeddata", kick);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [loop, renderProcessedFrame, viewportBounds.height, viewportBounds.width]);
+  }, [loop, displayScale]);
 
   const startRecording = useCallback(() => {
     if (modeRef.current === "processing" || modeRef.current === "recording") return;
@@ -630,14 +609,8 @@ export function LoMotionStudio() {
         ) : (
           <canvas
             ref={displayCanvasRef}
-            className="absolute bg-[#171916]"
-            style={{
-              imageRendering: "pixelated",
-              width: `${displayFrame.width}px`,
-              height: `${displayFrame.height}px`,
-              left: `${displayFrame.x}px`,
-              top: `${displayFrame.y}px`,
-            }}
+            className="absolute inset-0 h-full w-full bg-[#171916]"
+            style={{ imageRendering: "pixelated" }}
           />
         )}
       </div>
