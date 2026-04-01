@@ -210,11 +210,11 @@ export function LoMotionStudio() {
     const video = videoRef.current;
     const displayCanvas = displayCanvasRef.current;
     const processCanvas = processCanvasRef.current;
-    if (!video || !displayCanvas || !processCanvas) return;
-    if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
+    if (!video || !displayCanvas || !processCanvas) return false;
+    if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) return false;
 
     const sourceAspect = video.videoHeight / video.videoWidth;
-    if (aspectMode === "full" && (!viewportBounds.width || !viewportBounds.height)) return;
+    if (aspectMode === "full" && (!viewportBounds.width || !viewportBounds.height)) return false;
     const containerAspect = viewportBounds.height / viewportBounds.width;
     const targetHeight = (() => {
       if (aspectMode === "classic") return 48;
@@ -229,7 +229,7 @@ export function LoMotionStudio() {
 
     const pctx = processCanvas.getContext("2d", { willReadFrequently: true });
     const dctx = displayCanvas.getContext("2d");
-    if (!pctx || !dctx) return;
+    if (!pctx || !dctx) return false;
 
     const targetAspect = targetHeight / TARGET_WIDTH;
     const videoAspect = video.videoHeight / video.videoWidth;
@@ -311,6 +311,8 @@ export function LoMotionStudio() {
         lastCaptureAtRef.current = now;
       }
     }
+
+    return true;
   }, [aspectMode, displayScale, viewportBounds.height, viewportBounds.width]);
 
   const stopRecordingRef = useRef<() => Promise<void>>(async () => {});
@@ -396,12 +398,25 @@ export function LoMotionStudio() {
 
   useEffect(() => {
     if (!streamRef.current) return;
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = window.requestAnimationFrame(loop);
+
+    const video = videoRef.current;
+    const kick = () => {
+      renderProcessedFrame(false, performance.now());
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = window.requestAnimationFrame(loop);
+    };
+
+    if (video && video.readyState >= 2 && viewportBounds.width && viewportBounds.height) {
+      kick();
+    } else if (video) {
+      video.addEventListener("loadeddata", kick, { once: true });
+    }
+
     return () => {
+      if (video) video.removeEventListener("loadeddata", kick);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [loop, displayScale]);
+  }, [loop, renderProcessedFrame, viewportBounds.height, viewportBounds.width]);
 
   const startRecording = useCallback(() => {
     if (modeRef.current === "processing" || modeRef.current === "recording") return;
