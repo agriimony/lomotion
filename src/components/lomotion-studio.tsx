@@ -253,7 +253,7 @@ export function LoMotionStudio() {
 
     const scaleX = viewportWidth / quantized.width;
     const scaleY = viewportHeight / quantized.height;
-    const pixelScale = aspectMode === "full" ? Math.max(scaleX, scaleY) : Math.min(scaleX, scaleY);
+    const pixelScale = Math.min(scaleX, scaleY);
     const drawWidth = quantized.width * pixelScale;
     const drawHeight = quantized.height * pixelScale;
     const offsetX = (viewportWidth - drawWidth) / 2;
