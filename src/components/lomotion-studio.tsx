@@ -8,6 +8,7 @@ import { DEFAULT_THRESHOLD, LCD_BLACK, LCD_GREEN, MAX_RECORD_MS, RECORD_FPS, TAR
 import { quantizeFrame } from "@/lib/quantize";
 import { LOGO_BITMAP, LOGO_OFFSET_X, LOGO_OFFSET_Y } from "@/lib/logo-mask";
 import { triggerHaptic } from "@/lib/haptics";
+import { getFarcasterMiniAppState, type FarcasterMiniAppContext } from "@/lib/farcaster";
 
 type Mode = "live" | "recording" | "processing" | "review";
 type AspectMode = "full" | "square" | "classic";
@@ -129,6 +130,7 @@ export function LoMotionStudio() {
   const [previewSize, setPreviewSize] = useState({ width: TARGET_WIDTH, height: 84 });
   const [renderElapsedMs, setRenderElapsedMs] = useState(0);
   const [renderFrameProgress, setRenderFrameProgress] = useState({ current: 0, total: 0, phase: "idle" });
+  const [miniAppContext, setMiniAppContext] = useState<FarcasterMiniAppContext | null>(null);
 
   useEffect(() => {
     modeRef.current = mode;
@@ -141,6 +143,21 @@ export function LoMotionStudio() {
   useEffect(() => {
     playbackModeRef.current = playbackMode;
   }, [playbackMode]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const state = await getFarcasterMiniAppState();
+      if (cancelled || !state.isMiniApp) return;
+      setMiniAppContext(state.context);
+      await state.sdk?.actions?.ready?.();
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const displayScale = useMemo(() => {
     if (typeof window === "undefined") return 4;
@@ -507,8 +524,18 @@ export function LoMotionStudio() {
   const recordCircumference = 2 * Math.PI * 46;
   const recordDashOffset = recordCircumference * (1 - recordProgress);
 
+  const safeArea = miniAppContext?.client?.safeAreaInsets;
+
   return (
-    <main className="relative h-[100dvh] min-h-[100dvh] overflow-hidden bg-[#171916] text-[#96b56f]">
+    <main
+      className="relative h-[100dvh] min-h-[100dvh] overflow-hidden bg-[#171916] text-[#96b56f]"
+      style={{
+        paddingTop: safeArea?.top ?? 0,
+        paddingRight: safeArea?.right ?? 0,
+        paddingBottom: safeArea?.bottom ?? 0,
+        paddingLeft: safeArea?.left ?? 0,
+      }}
+    >
       <video ref={videoRef} className="hidden" muted playsInline />
       <canvas ref={processCanvasRef} className="hidden" />
 
