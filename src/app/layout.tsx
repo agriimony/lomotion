@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 const miniAppEmbed = {
   version: "1",
-  imageUrl: "https://lomotion.vercel.app/miniapp-image.png",
+  imageUrl: "https://lomotion.vercel.app/miniapp-image.jpg",
   button: {
     title: "LoMotion",
     action: {
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "LoMotion",
     description: "low-fi motion graphics",
-    images: ["https://lomotion.vercel.app/miniapp-image.png"],
+    images: ["https://lomotion.vercel.app/miniapp-image.jpg"],
   },
   other: {
     "fc:miniapp": JSON.stringify(miniAppEmbed),
