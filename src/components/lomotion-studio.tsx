@@ -502,14 +502,18 @@ export function LoMotionStudio() {
     const url = URL.createObjectURL(gifBlob);
     triggerHaptic("success");
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `lomotion-${Date.now()}.gif`;
-    a.rel = "noopener";
-    a.target = "_blank";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    try {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `lomotion-${Date.now()}.gif`;
+      a.rel = "noopener";
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
 
     setTimeout(() => {
       URL.revokeObjectURL(url);
