@@ -134,6 +134,7 @@ export function LoMotionStudio() {
   const [miniAppContext, setMiniAppContext] = useState<FarcasterMiniAppContext | null>(null);
   const [miniAppSdk, setMiniAppSdk] = useState<Awaited<ReturnType<typeof getFarcasterMiniAppState>>["sdk"]>(null);
   const [viewportBounds, setViewportBounds] = useState({ width: 0, height: 0 });
+  const [displayFrame, setDisplayFrame] = useState({ width: 0, height: 0, x: 0, y: 0 });
 
   useEffect(() => {
     modeRef.current = mode;
@@ -251,21 +252,22 @@ export function LoMotionStudio() {
     const offsetX = Math.floor((containerWidth - drawWidth) / 2);
     const offsetY = Math.floor((containerHeight - drawHeight) / 2);
 
-    displayCanvas.width = Math.max(1, containerWidth);
-    displayCanvas.height = Math.max(1, containerHeight);
+    displayCanvas.width = Math.max(1, drawWidth);
+    displayCanvas.height = Math.max(1, drawHeight);
+    setDisplayFrame({ width: drawWidth, height: drawHeight, x: offsetX, y: offsetY });
     dctx.imageSmoothingEnabled = false;
     dctx.fillStyle = "#000000";
     dctx.fillRect(0, 0, displayCanvas.width, displayCanvas.height);
 
     dctx.fillStyle = LCD_GREEN;
-    dctx.fillRect(offsetX, offsetY, drawWidth, drawHeight);
+    dctx.fillRect(0, 0, drawWidth, drawHeight);
 
     for (let y = 0; y < quantized.height; y += 1) {
       for (let x = 0; x < quantized.width; x += 1) {
         const idx = y * quantized.width + x;
         if (!quantized.binary[idx]) continue;
         dctx.fillStyle = LCD_BLACK;
-        dctx.fillRect(offsetX + x * pixelScale, offsetY + y * pixelScale, pixelScale, pixelScale);
+        dctx.fillRect(x * pixelScale, y * pixelScale, pixelScale, pixelScale);
       }
     }
 
@@ -277,8 +279,8 @@ export function LoMotionStudio() {
         const px = LOGO_OFFSET_X + x;
         const py = LOGO_OFFSET_Y + y;
         if (px < 0 || py < 0 || px >= quantized.width || py >= quantized.height) continue;
-        const drawX = offsetX + px * pixelScale;
-        const drawY = offsetY + py * pixelScale;
+        const drawX = px * pixelScale;
+        const drawY = py * pixelScale;
         const idx = py * quantized.width + px;
         dctx.fillStyle = quantized.binary[idx] ? LCD_GREEN : LCD_BLACK;
         dctx.fillRect(drawX, drawY, pixelScale, pixelScale);
@@ -287,7 +289,6 @@ export function LoMotionStudio() {
     dctx.restore();
 
     dctx.save();
-    dctx.translate(offsetX, offsetY);
     drawPixelGrid(dctx, quantized.width, quantized.height, pixelScale);
     dctx.restore();
 
@@ -606,8 +607,14 @@ export function LoMotionStudio() {
         ) : (
           <canvas
             ref={displayCanvasRef}
-            className="absolute inset-0 h-full w-full bg-[#171916]"
-            style={{ imageRendering: "pixelated" }}
+            className="absolute bg-[#171916]"
+            style={{
+              imageRendering: "pixelated",
+              width: `${displayFrame.width}px`,
+              height: `${displayFrame.height}px`,
+              left: `${displayFrame.x}px`,
+              top: `${displayFrame.y}px`,
+            }}
           />
         )}
       </div>
