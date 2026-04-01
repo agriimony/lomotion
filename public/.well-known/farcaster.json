@@ -16,8 +16,9 @@
     "primaryCategory": "art-creativity",
     "tags": ["gif", "camera", "pixel", "motion", "art"],
     "tagline": "low-fi motion graphics",
+    "heroImageUrl": "https://lomotion.vercel.app/hero-image.jpg",
     "ogTitle": "LoMotion",
     "ogDescription": "Capture low-fi motion graphics and export pixel GIF loops.",
-    "ogImageUrl": "https://lomotion.vercel.app/miniapp-image.jpg"
+    "ogImageUrl": "https://lomotion.vercel.app/hero-image.jpg"
   }
 }
