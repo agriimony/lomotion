@@ -208,10 +208,13 @@ export function LoMotionStudio() {
     if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
 
     const sourceAspect = video.videoHeight / video.videoWidth;
+    const containerAspect = viewportBounds.width > 0 && viewportBounds.height > 0
+      ? viewportBounds.height / viewportBounds.width
+      : sourceAspect;
     const targetHeight = (() => {
       if (aspectMode === "classic") return 48;
       if (aspectMode === "square") return TARGET_WIDTH;
-      return Math.max(48, Math.round(sourceAspect * TARGET_WIDTH));
+      return Math.max(48, Math.round(containerAspect * TARGET_WIDTH));
     })();
     if (processCanvas.width !== TARGET_WIDTH || processCanvas.height !== targetHeight) {
       processCanvas.width = TARGET_WIDTH;
