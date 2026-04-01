@@ -32,6 +32,12 @@ export type FarcasterMiniAppState = {
   sdk: {
     actions?: {
       ready: (options?: { disableNativeGestures?: boolean }) => Promise<void> | void;
+      composeCast?: (options?: {
+        text?: string;
+        embeds?: [] | [string] | [string, string];
+        close?: boolean;
+        channelKey?: string;
+      }) => Promise<unknown>;
     };
   } | null;
 };

@@ -131,6 +131,7 @@ export function LoMotionStudio() {
   const [renderElapsedMs, setRenderElapsedMs] = useState(0);
   const [renderFrameProgress, setRenderFrameProgress] = useState({ current: 0, total: 0, phase: "idle" });
   const [miniAppContext, setMiniAppContext] = useState<FarcasterMiniAppContext | null>(null);
+  const [miniAppSdk, setMiniAppSdk] = useState<Awaited<ReturnType<typeof getFarcasterMiniAppState>>["sdk"]>(null);
 
   useEffect(() => {
     modeRef.current = mode;
@@ -151,6 +152,7 @@ export function LoMotionStudio() {
       const state = await getFarcasterMiniAppState();
       if (cancelled || !state.isMiniApp) return;
       setMiniAppContext(state.context);
+      setMiniAppSdk(state.sdk);
       await state.sdk?.actions?.ready?.();
     })();
 
@@ -486,8 +488,43 @@ export function LoMotionStudio() {
 
   const shareGif = useCallback(async () => {
     if (!gifBlob) return;
-    const file = new File([gifBlob], "lomotion.gif", { type: "image/gif" });
+
+    const copyGifToClipboard = async () => {
+      if (
+        typeof window === "undefined"
+        || !("ClipboardItem" in window)
+        || !navigator.clipboard?.write
+      ) {
+        return false;
+      }
+
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            [gifBlob.type || "image/gif"]: gifBlob,
+          }),
+        ]);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
     try {
+      if (miniAppSdk?.actions?.composeCast) {
+        const copied = await copyGifToClipboard();
+        await miniAppSdk.actions.composeCast({
+          text: copied
+            ? "Made with LoMotion. GIF copied to clipboard — paste it into this cast."
+            : "Made with LoMotion.",
+          embeds: [window.location.href],
+        });
+        triggerHaptic("success");
+        if (!copied) saveGif();
+        return;
+      }
+
+      const file = new File([gifBlob], "lomotion.gif", { type: "image/gif" });
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: "LoMotion", text: "Made with LoMotion" });
         triggerHaptic("success");
@@ -497,7 +534,7 @@ export function LoMotionStudio() {
     } catch {
       // ignore cancelled share
     }
-  }, [gifBlob, saveGif]);
+  }, [gifBlob, miniAppSdk, saveGif]);
 
   const toggleCamera = useCallback(() => {
     triggerHaptic("light");
