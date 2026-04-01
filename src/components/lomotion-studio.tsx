@@ -501,11 +501,19 @@ export function LoMotionStudio() {
     if (!gifBlob) return;
     const url = URL.createObjectURL(gifBlob);
     triggerHaptic("success");
+
     const a = document.createElement("a");
     a.href = url;
     a.download = `lomotion-${Date.now()}.gif`;
+    a.rel = "noopener";
+    a.target = "_blank";
+    document.body.appendChild(a);
     a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    document.body.removeChild(a);
+
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 4000);
   }, [gifBlob]);
 
   const shareGif = useCallback(async () => {
