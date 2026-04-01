@@ -102,6 +102,7 @@ function RetakeIcon() {
 
 export function LoMotionStudio() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
   const displayCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const processCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -132,6 +133,7 @@ export function LoMotionStudio() {
   const [renderFrameProgress, setRenderFrameProgress] = useState({ current: 0, total: 0, phase: "idle" });
   const [miniAppContext, setMiniAppContext] = useState<FarcasterMiniAppContext | null>(null);
   const [miniAppSdk, setMiniAppSdk] = useState<Awaited<ReturnType<typeof getFarcasterMiniAppState>>["sdk"]>(null);
+  const [viewportBounds, setViewportBounds] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     modeRef.current = mode;
@@ -162,16 +164,39 @@ export function LoMotionStudio() {
   }, []);
 
   const displayScale = useMemo(() => {
-    if (typeof window === "undefined") return 4;
-    const maxWidth = Math.max(320, Math.min(window.innerWidth, 640));
+    const width = viewportBounds.width || (typeof window !== "undefined" ? window.innerWidth : previewSize.width * 4);
+    const maxWidth = Math.max(320, Math.min(width, 640));
     return Math.max(3, Math.floor(maxWidth / previewSize.width));
-  }, [previewSize.width]);
+  }, [previewSize.width, viewportBounds.width]);
 
   const stopStream = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
+  }, []);
+
+  useEffect(() => {
+    const element = viewportRef.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+
+    const updateBounds = () => {
+      const rect = element.getBoundingClientRect();
+      setViewportBounds({
+        width: Math.max(1, Math.round(rect.width)),
+        height: Math.max(1, Math.round(rect.height)),
+      });
+    };
+
+    updateBounds();
+    const observer = new ResizeObserver(updateBounds);
+    observer.observe(element);
+    window.addEventListener("resize", updateBounds);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateBounds);
+    };
   }, []);
 
   const renderProcessedFrame = useCallback((capture = false, now = performance.now()) => {
@@ -218,12 +243,8 @@ export function LoMotionStudio() {
     const raw = pctx.getImageData(0, 0, TARGET_WIDTH, targetHeight);
     const quantized = quantizeFrame(raw, thresholdRef.current);
 
-    const viewportWidth = typeof window !== "undefined"
-      ? Math.round(window.visualViewport?.width || window.innerWidth)
-      : TARGET_WIDTH * displayScale;
-    const viewportHeight = typeof window !== "undefined"
-      ? Math.round(window.visualViewport?.height || window.innerHeight)
-      : targetHeight * displayScale;
+    const viewportWidth = viewportBounds.width || TARGET_WIDTH * displayScale;
+    const viewportHeight = viewportBounds.height || targetHeight * displayScale;
     displayCanvas.width = viewportWidth;
     displayCanvas.height = viewportHeight;
     dctx.imageSmoothingEnabled = false;
@@ -283,7 +304,7 @@ export function LoMotionStudio() {
         lastCaptureAtRef.current = now;
       }
     }
-  }, [aspectMode, displayScale]);
+  }, [aspectMode, displayScale, viewportBounds.height, viewportBounds.width]);
 
   const stopRecordingRef = useRef<() => Promise<void>>(async () => {});
 
@@ -576,7 +597,7 @@ export function LoMotionStudio() {
       <video ref={videoRef} className="hidden" muted playsInline />
       <canvas ref={processCanvasRef} className="hidden" />
 
-      <div className="relative h-[100dvh] w-screen overflow-hidden">
+      <div ref={viewportRef} className="relative h-[100dvh] w-full overflow-hidden">
         {mode === "review" && gifUrl ? (
           <img
             src={gifUrl}
