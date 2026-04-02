@@ -317,7 +317,7 @@ export function LoMotionStudio() {
       const elapsed = now - recordStartRef.current;
       setRecordMs(elapsed);
       const wholeSeconds = Math.floor(elapsed / 1000);
-      if (wholeSeconds > 1 && wholeSeconds !== lastSecondHapticRef.current) {
+      if (wholeSeconds >= 1 && wholeSeconds !== lastSecondHapticRef.current) {
         lastSecondHapticRef.current = wholeSeconds;
         triggerHaptic("light");
       }

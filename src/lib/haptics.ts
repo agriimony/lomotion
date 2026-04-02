@@ -1,16 +1,18 @@
 export async function triggerHaptic(kind: "light" | "medium" | "success") {
-  try {
-    const { sdk } = await import("@farcaster/miniapp-sdk");
-    if (sdk?.haptics) {
-      if (kind === "success") {
-        await sdk.haptics.notificationOccurred("success");
+  if (typeof window !== "undefined" && "ReactNativeWebView" in window) {
+    try {
+      const { sdk } = await import("@farcaster/miniapp-sdk");
+      if (sdk?.haptics) {
+        if (kind === "success") {
+          await sdk.haptics.notificationOccurred("success");
+          return;
+        }
+        await sdk.haptics.impactOccurred(kind === "light" ? "light" : "medium");
         return;
       }
-      await sdk.haptics.impactOccurred(kind === "light" ? "light" : "medium");
-      return;
+    } catch {
+      // fall through to navigator.vibrate
     }
-  } catch {
-    // fall back to navigator.vibrate
   }
 
   if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return;
